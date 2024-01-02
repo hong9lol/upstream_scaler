@@ -10,13 +10,13 @@ def hpa_updater():
     # HPA data update (interval 10s)
     interval = 10
     while True:
-        time.sleep(interval)
         hpa_list = api.get_hpa_list()
         hpa.update_hpas(hpa_list)
+        time.sleep(interval)
 
 
 def job_handler():
-    job = job_dequeue()
+
 
     # find deployment name
 
@@ -27,6 +27,13 @@ def job_handler():
     # hpa.get_hpa(deployment_name)
 
     # if it is needed, do scale changeing min pods
+    while True:
+        if is_empty():
+            time.sleep(1)
+            continue
+
+        job = job_dequeue()
+
 
 def start():
     # 매 10초마다 hpa 정보 가져오기
@@ -47,3 +54,10 @@ def job_enqueue(job):
 
 def job_dequeue():
     return job_list.pop()
+
+
+def is_empty():
+    if len(job_list) < 1:
+        return True
+    else:
+        return False

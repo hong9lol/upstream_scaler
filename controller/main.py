@@ -16,17 +16,19 @@ def node():
 
 
 @app.route('/api/v1/deployment', methods=['GET'])
-def deployment():
+def get_deployment():
     ret = api.get_deployment_list()
     print(ret)
     return json.dumps(ret)
 
 
 @app.route('/api/v1/hpa', methods=['GET'])
-def hpa():
+def get_hpa():
     ret = hpa.get_all_hpas()
-    print(ret)
-    return json.dumps(ret)
+    if ret.count != 0:
+        return json.dumps(ret)
+    else:
+        return json.dumps([])
 
 
 @app.route("/api/v1/notify", methods=['POST'])

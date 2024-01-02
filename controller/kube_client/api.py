@@ -52,6 +52,7 @@ def get_hpa_list():
         d["namespace"] = hpa.metadata.namespace
         d["min_replicas"] = hpa.spec.min_replicas
         d["max_replicas"] = hpa.spec.max_replicas
+        d["target"] = hpa.spec.scale_target_ref.name
         l = list()
         for metric in hpa.spec.metrics:
             _d = dict()

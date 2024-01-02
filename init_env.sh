@@ -8,10 +8,11 @@ minikube start --nodes=3 --cpus=max --cni=calico
 
 echo 2. Start Simple Application
 kubectl apply -f yaml/simple_app.yaml
+kubectl apply -f yaml/simple_app2.yaml
 sleep 10
 kubectl expose deployment simple-app-deployment --type=LoadBalancer --port=8080 & 
 
-sleep 10
+sleep 20
 minikube service simple-app-deployment
 minikube service list -n default -o json | jq '.[1].URLs[0]' > target_url.txt
 
@@ -24,6 +25,9 @@ minikube addons enable metrics-server
 # sleep 10
 # kubectl rollout restart -n kube-system deployments.apps metrics-server
 # kubectl get deployments.apps -n kube-system metrics-server --template='{{range $k := .spec.template.spec.containers}}{{$k.args}}{{"\n"}}{{end}}' | grep -o 'metric-resolution=[^ ]*'
-sleep 120
+sleep 60
+
+kubectl apply -f yaml/hpa.yaml
+kubectl apply -f yaml/hpa2.yaml
 
 echo ====== Done ======

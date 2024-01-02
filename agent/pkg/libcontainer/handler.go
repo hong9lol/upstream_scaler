@@ -38,6 +38,8 @@ import (
 	info "github.com/google/cadvisor/info/v1"
 )
 
+// pod updater도 필요함
+
 var (
 	referencedResetInterval = flag.Uint64("referenced_reset_interval", 0,
 		"Reset interval for referenced bytes (container_referenced_bytes metric), number of measurement cycles after which referenced bytes are cleared, if set to 0 referenced bytes are never cleared (default: 0)")
