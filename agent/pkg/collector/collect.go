@@ -18,7 +18,7 @@ type ResponseData struct {
 func collect() {
 	for {
 		fmt.Println("Hello")
-		resp, err := http.Get("http://localhost:8080/api/v2.0/stats/summanry/")
+		resp, err := http.Get("http://localhost:8080/api/v2.0/stats/summary/")
 		if err != nil {
 			panic(err)
 		}
