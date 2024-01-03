@@ -1,8 +1,9 @@
 package common
 
 type Deployment struct {
-	Name string `json:"deployment_name"`
-	Pods []Pod  `json:"pods"`
+	Name       string `json:"deployment_name"`
+	CPURequest uint64 `json:"cpu_request"`
+	Pods       []Pod  `json:"pods"`
 }
 
 type Pod struct {

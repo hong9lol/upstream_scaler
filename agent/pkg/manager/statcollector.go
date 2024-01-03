@@ -64,16 +64,19 @@ func (s *StatCollector) initK8sConfig() {
 	s.coreClient, _ = kubernetes.NewForConfig(s.restCfg)
 }
 
-func (s *StatCollector) getAllPods() {
+func (s *StatCollector) getAllPods() []string {
 	// NODE_NAME 환경 변수 읽기
 	nodeName := os.Getenv("HOST_NAME")
 
 	if nodeName == "" {
 		fmt.Println("HOST_NAME environment variable is not set.")
-		return
+		return nil
 	}
 
 	fmt.Printf("Node Name: %s\n", nodeName)
+
+	// for test
+	nodeName = "minikube-m02"
 
 	// 현재 노드에서 실행 중인 Pod 가져오기
 	pods, err := s.coreClient.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{
@@ -81,17 +84,21 @@ func (s *StatCollector) getAllPods() {
 	})
 	if err != nil {
 		fmt.Printf("Error getting pods: %v\n", err)
-		return
+		return nil
 	}
 
 	// Pod 목록 출력
+	var podNameList []string
 	fmt.Printf("Pods on Node %s:\n", nodeName)
 	for _, pod := range pods.Items {
 		fmt.Printf("Name: %s\n", pod.Name)
 		fmt.Printf("Namespace: %s\n", pod.Namespace)
 		fmt.Printf("Status: %s\n", pod.Status.Phase)
 		fmt.Println("---")
+		podNameList = append(podNameList, pod.Name)
 	}
+
+	return podNameList
 }
 
 func (s *StatCollector) Start() {
@@ -99,7 +106,7 @@ func (s *StatCollector) Start() {
 	db := database.GetInstance()
 	for {
 		hpas := db.GetAllHPA()
-		s.getAllPods()
+		pods := s.getAllPods()
 		for _, hpa := range hpas {
 			// hpa에서 target의 이름과 겹치는 pod 찾기
 			// 각 파드의 resource 사용량 가져오기

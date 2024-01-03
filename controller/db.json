@@ -1,0 +1,1 @@
+{"_default": {"1": {"name": "simple-hpa", "namespace": "default", "min_replicas": 5, "max_replicas": 10, "target": "simple-app", "metrics": [{"name": "cpu", "target_utilization": 50, "type": "Utilization"}]}}}

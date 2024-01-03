@@ -34,6 +34,7 @@ def get_deployment_list():
     result = list()
     # HPA 목록 출력
     for deployment in deployments.items:
+        print(deployment.metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"])
         d = dict()
         d["name"] = deployment.metadata.name
         d["replicas"] = deployment.spec.replicas
