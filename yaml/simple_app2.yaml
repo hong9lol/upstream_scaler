@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: simple-app2
-  name: simple-app-deployment2
+  name: simple-app2
 spec:
   replicas: 5
   selector:
@@ -17,7 +17,7 @@ spec:
       containers:
         - image: hong9lol/simple_app:latest
           imagePullPolicy: Always
-          name: simple-app2
+          name: simple-app2-container1
           ports:
             - containerPort: 8081
           readinessProbe:

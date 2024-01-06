@@ -16,20 +16,15 @@ func NewHPAHandler() *HPAHandler {
 	return &HPAHandler{}
 }
 
-func (h *HPAHandler) Start() {
-	h.controllerServiceName = "upstream_scaler_service"
+func (h *HPAHandler) Start(controllerServiceName string) {
+	h.controllerServiceName = controllerServiceName
 	db := database.GetInstance()
 
 	for {
-
-		// resp, err := http.Get("http://" + h.controllerServiceName + ":5001/api/v1/hpa")
-
-		// for test
-		resp, err := http.Get("http://127.0.0.1:5001/api/v1/hpa")
+		resp, err := http.Get("http://" + controllerServiceName + ":5001/api/v1/hpa")
 		if err != nil {
 			panic(err)
 		}
-
 		defer resp.Body.Close()
 
 		// 결과 출력

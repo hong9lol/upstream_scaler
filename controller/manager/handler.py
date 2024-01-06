@@ -1,7 +1,9 @@
 import threading
 import time
+
 from db import hpa
 from kube_client import api
+from manager import collector
 
 job_list = []
 
@@ -16,23 +18,23 @@ def hpa_updater():
 
 
 def job_handler():
-
-
-    # find deployment name
-
-    # reqeust all resource from agent
-    #collector.collect_all_resource_usage_of_deployment("deployment_a")
-
-    # get hpa condition
-    # hpa.get_hpa(deployment_name)
+    interval = 1
 
     # if it is needed, do scale changeing min pods
     while True:
         if is_empty():
-            time.sleep(1)
+            time.sleep(interval)
             continue
 
         job = job_dequeue()
+        deployment_name = job["deployment_name"]
+        data = collector.collect_all_resource_usage_of_deployment(deployment_name)
+        hpa = hpa.get_hpa(deployment_name)
+        print(data)
+        # 알고리즘
+        # 1. 전체 리소스 추출
+        # 2. hpa 컨디션 비교
+        # 3. run
 
 
 def start():
@@ -49,7 +51,7 @@ def start():
 
 def job_enqueue(job):
     job_list.insert(0, job)
-    print(job_list)
+    # print(job_list)
 
 
 def job_dequeue():

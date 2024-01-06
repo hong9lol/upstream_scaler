@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+
 	"strconv"
 )
 
@@ -12,6 +13,7 @@ func init() {
 }
 
 func RunServer(addr string, port int) {
-	http.Handle("/api/v1/metrics", http.HandlerFunc(requestHandler.GetMetrics))
+	http.Handle("/api/v1/metrics/", http.HandlerFunc(requestHandler.GetMetrics))
+
 	http.ListenAndServe(addr+":"+strconv.Itoa(port), nil)
 }

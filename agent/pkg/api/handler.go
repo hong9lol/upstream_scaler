@@ -1,13 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-)
+	"strings"
 
-const (
-	CPU     string = "cpu"
-	MEMMORY string = "memory"
+	database "github.com/hong9lol/upstream_scaler/tree/master/agent/pkg/db"
 )
 
 type HandlerFunc func(http.ResponseWriter, *http.Request)
@@ -20,6 +19,15 @@ func NewRequestHandler() *RequestHandler {
 
 func (rh *RequestHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get Metrics")
-
-	w.Write([]byte("hello"))
+	deployment := strings.Split(r.URL.Path, "api/v1/metrics/")[1]
+	db := database.GetInstance()
+	stats, err := db.GetStat(deployment)
+	if err != nil {
+		return
+	}
+	res, err := json.Marshal(stats)
+	if err != nil {
+		return
+	}
+	w.Write(res)
 }
