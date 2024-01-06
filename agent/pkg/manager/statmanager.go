@@ -30,6 +30,7 @@ type StatCollector struct {
 }
 type Notify struct {
 	DeploymentName string `json:"deployment_name"`
+	HPAName        string `json:"hpa_name"`
 }
 
 func NewStatCollector() *StatCollector {
@@ -74,8 +75,6 @@ func (s *StatCollector) executeRemoteCommand(podName string, namespace string, c
 		Stderr: errBuf,
 	})
 
-	fmt.Println(err)
-	fmt.Println(errBuf.String())
 	if err != nil {
 		return "", 0, "", fmt.Errorf("%w Failed executing command %s on %v/%v", err, command, namespace, podName)
 	}
@@ -136,8 +135,63 @@ func (s *StatCollector) getAllPods() map[string]entity.Pod {
 	return podList
 }
 
-func (s *StatCollector) checkResourceUsage(deployment entity.Deployment) bool {
-	// resource 사용량 체크
+func calUsage(last entity.Usage, prev entity.Usage) float64 {
+
+	// fmt.Println(container.Usages)
+	usage := last.Usage - prev.Usage
+	timpestamp := last.Timestamp - prev.Timestamp
+	// fmt.Println(container.Name, (usage / timpestamp), "\n", container.Usages)
+	return float64(usage) / float64(timpestamp)
+}
+
+func (s *StatCollector) calUsagePerSec(container entity.Container) float64 {
+
+	// use 6 data to get avg usage
+	if len(container.Usages) < 6 {
+		// return when there is only one value in the list
+		return 0
+	}
+	usagePerSec := 0.0
+	for i := 0; i < 5; i++ {
+		last := container.Usages[len(container.Usages)-(i+1)]
+		prev := container.Usages[len(container.Usages)-(i+2)]
+		usagePerSec += calUsage(last, prev)
+	}
+	// fmt.Println(container.Name, (usage / timpestamp), "\n", container.Usages)
+	// usageRatePerSec := usagePerSec / container.CPURequest
+	return usagePerSec / 5.0
+}
+
+func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa entity.HPA) bool {
+	totalCpuUsageRate := 0.0
+	podCpuUsageRate := 0.0
+	// total cpu usage rate
+	for _, pod := range deployment.Pods {
+		podCpuUsage := 0.0
+		podCpuUsageRate = 0
+		for _, container := range pod.Containers {
+			containerUsagePerSec := s.calUsagePerSec(container)
+			podCpuUsage += containerUsagePerSec
+			podCpuUsageRate += (containerUsagePerSec / float64(container.CPURequest)) * 100
+		}
+		fmt.Println(pod.Name, podCpuUsage)
+
+		podCpuUsageRate = (float64(podCpuUsageRate) / float64(len(pod.Containers)))
+		totalCpuUsageRate += podCpuUsageRate
+	}
+	totalCpuUsageRate = (totalCpuUsageRate / float64(len(deployment.Pods)))
+	fmt.Println(totalCpuUsageRate)
+
+	// support only cpu resouce currently
+	// check if it is higher than hpa.Metrics
+	for _, metric := range hpa.Metrics {
+		if metric.Name == "cpu" {
+			if totalCpuUsageRate > float64(metric.TargetUtilization) {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 
@@ -163,7 +217,7 @@ func (s *StatCollector) updateStats(deployment *entity.Deployment) (entity.Deplo
 			for _, container := range deployment.Pods[lastPod.Name].Containers {
 				usages := prevDeployment.Pods[lastPod.Name].Containers[container.Name].Usages
 				if len(usages) > 9 {
-					usages = usages[:len(usages)-1]
+					usages = usages[1:]
 				}
 				usages = append(usages, deployment.Pods[lastPod.Name].Containers[container.Name].Usages[0])
 				prevDeployment.Pods[lastPod.Name].Containers[container.Name] = entity.Container{
@@ -171,7 +225,7 @@ func (s *StatCollector) updateStats(deployment *entity.Deployment) (entity.Deplo
 					CPURequest: container.CPURequest,
 					Usages:     usages,
 				}
-				fmt.Println(prevDeployment)
+				// fmt.Println(prevDeployment)
 			}
 		} else { // 새로운 파드
 			prevDeployment.Pods[lastPod.Name] = pod
@@ -232,9 +286,9 @@ func (s *StatCollector) Start(controllerServiceName string) {
 			if err != nil {
 				fmt.Println(err)
 			}
-			if s.checkResourceUsage(updatedStat) {
-				deploymentName := Notify{DeploymentName: hpa.Target}
-				pbytes, _ := json.Marshal(deploymentName)
+			if s.checkResourceUsage(updatedStat, hpa) {
+				notify := Notify{DeploymentName: hpa.Target, HPAName: hpa.Name}
+				pbytes, _ := json.Marshal(notify)
 				buff := bytes.NewBuffer(pbytes)
 				_, err = http.Post("http://"+controllerServiceName+":5001/api/v1/notify", "application/json", buff)
 				if err != nil {

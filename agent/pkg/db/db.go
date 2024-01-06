@@ -55,9 +55,10 @@ func GetInstance() *DB {
 		lock.Lock()
 		defer lock.Unlock()
 		if _db == nil {
+			fmt.Println("create new db instance")
 			return newDB()
 		} else {
-			fmt.Println("_db instance already created.")
+			fmt.Println("_db instance already created")
 		}
 	}
 	return _db

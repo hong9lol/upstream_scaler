@@ -11,7 +11,8 @@ data = []
 
 def requester(url, deployment):
     # for test
-    url = "127.0.0.1:3000"
+    url = "127.0.0.1:3001"
+
     response = requests.get('http://' + url + "/api/v1/metrics/" + deployment)
     print(response.json())
     lock.acquire()  # 작업이 끝나기 전까지 다른 쓰레드가 공유데이터 접근을 금지

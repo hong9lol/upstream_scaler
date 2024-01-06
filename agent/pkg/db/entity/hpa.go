@@ -1,7 +1,7 @@
 package entity
 
 type Metrics struct {
-	Name              string `json:"ame,omitempty"`
+	Name              string `json:"name,omitempty"`
 	TargetUtilization int    `json:"target_utilization,omitempty"`
 	Type              string `json:"type,omitempty"`
 }

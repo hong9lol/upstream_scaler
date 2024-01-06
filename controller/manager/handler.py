@@ -28,8 +28,9 @@ def job_handler():
 
         job = job_dequeue()
         deployment_name = job["deployment_name"]
+        hpa_name = job["hpa_name"]
         data = collector.collect_all_resource_usage_of_deployment(deployment_name)
-        hpa = hpa.get_hpa(deployment_name)
+        _hpa = hpa.get_hpa(hpa_name)
         print(data)
         # 알고리즘
         # 1. 전체 리소스 추출
@@ -50,8 +51,11 @@ def start():
 
 
 def job_enqueue(job):
+    if job_list.count(job) > 0:
+        return
+
     job_list.insert(0, job)
-    # print(job_list)
+    print(job_list)
 
 
 def job_dequeue():

@@ -10,11 +10,13 @@ echo 2. Start Simple Application
 kubectl apply -f yaml/simple_app.yaml
 kubectl apply -f yaml/simple_app2.yaml
 sleep 10
-kubectl expose deployment simple-app-deployment --type=LoadBalancer --port=8080 & 
+kubectl expose deployment simple-app --type=LoadBalancer --port=8080 & 
+kubectl expose deployment simple-app2 --type=LoadBalancer --port=8080 & 
 
 sleep 20
-minikube service simple-app-deployment
-minikube service list -n default -o json | jq '.[1].URLs[0]' > target_url.txt
+minikube service simple-app
+minikube service simple-app2
+#minikube service list -n default -o json | jq '.[1].URLs[0]' > target_url.txt
 
 echo 3. Start Metrics-server
 kubectl delete -n kube-system deployments.apps metrics-server

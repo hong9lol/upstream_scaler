@@ -17,7 +17,7 @@ func main() {
 
 	statCollector := manager.NewStatCollector()
 	go statCollector.Start(controllerServiceName)
-	api.RunServer("localhost", 3000)
+	api.RunServer("localhost", 3001)
 	wg.Wait() // Wait for all goroutines to finish
 	fmt.Println("All goroutines have finished")
 }
