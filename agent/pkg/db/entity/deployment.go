@@ -8,7 +8,7 @@ type Deployment struct {
 type Pod struct {
 	Name       string               `json:"pod_name"`
 	AppLabel   string               `json:"label"` // app label to matching deployment
-	Containers map[string]Container `json:"container"`
+	Containers map[string]Container `json:"containers"`
 }
 
 type Container struct {

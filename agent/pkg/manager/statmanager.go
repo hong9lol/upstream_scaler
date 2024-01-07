@@ -97,6 +97,7 @@ func (s *StatCollector) getAllPods() map[string]entity.Pod {
 	// fmt.Printf("Get All Pods in Node Name: %s\n", nodeName)
 
 	// 현재 노드에서 실행 중인 Pod 가져오기
+	// TODO: need to change to get this info from kubelet api
 	pods, err := s.coreClient.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
 	})
@@ -145,7 +146,7 @@ func calUsage(last entity.Usage, prev entity.Usage) float64 {
 }
 
 func (s *StatCollector) calUsagePerSec(container entity.Container) float64 {
-
+	// TODO: need to consider the algorithm
 	// use 6 data to get avg usage
 	if len(container.Usages) < 6 {
 		// return when there is only one value in the list
@@ -165,6 +166,7 @@ func (s *StatCollector) calUsagePerSec(container entity.Container) float64 {
 func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa entity.HPA) bool {
 	totalCpuUsageRate := 0.0
 	podCpuUsageRate := 0.0
+
 	// total cpu usage rate
 	for _, pod := range deployment.Pods {
 		podCpuUsage := 0.0
@@ -195,12 +197,13 @@ func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa ent
 	return false
 }
 
-func (s *StatCollector) updateStats(deployment *entity.Deployment) (entity.Deployment, error) {
+func (s *StatCollector) updateStat(deployment entity.Deployment) (entity.Deployment, error) {
 	db := database.GetInstance()
-	prevDeployment, _ := db.GetStat(deployment.Name)
-	if prevDeployment == nil {
+	prevDeployment, err := db.GetStat(deployment.Name)
+
+	if err != nil { // not found
 		db.UpdateStat(deployment)
-		return *deployment, nil
+		return deployment, nil
 	}
 
 	// 삭제된 파드 체크
@@ -227,12 +230,12 @@ func (s *StatCollector) updateStats(deployment *entity.Deployment) (entity.Deplo
 				}
 				// fmt.Println(prevDeployment)
 			}
-		} else { // 새로운 파드
+		} else { // 새로운 파드 추가
 			prevDeployment.Pods[lastPod.Name] = pod
 		}
 	}
 	db.UpdateStat(prevDeployment)
-	return *prevDeployment, nil
+	return prevDeployment, nil
 }
 
 func (s *StatCollector) getStat(deploymentName string, podList map[string]entity.Pod) entity.Deployment {
@@ -244,6 +247,7 @@ func (s *StatCollector) getStat(deploymentName string, podList map[string]entity
 			for _, container := range pod.Containers {
 				// wg.Add(1)
 				func() {
+					// TODO: get this info from runc project
 					usageStr, timestamp, _, _ := s.executeRemoteCommand(pod.Name, config.NAMESPACE, container.Name, "head -1 /sys/fs/cgroup/cpu.stat")
 					usageInt64, err := strconv.ParseInt(strings.Split(strings.Split(usageStr, " ")[1], "\r")[0], 10, 64)
 					// fmt.Println(container.Name, usageInt64, timestamp)
@@ -282,7 +286,7 @@ func (s *StatCollector) Start(controllerServiceName string) {
 		for _, hpa := range hpas {
 			// 매 초마다 stat 업데이트
 			stat := s.getStat(hpa.Target, podList)
-			updatedStat, err := s.updateStats(&stat)
+			updatedStat, err := s.updateStat(stat)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -299,3 +303,26 @@ func (s *StatCollector) Start(controllerServiceName string) {
 		time.Sleep(1000 * time.Millisecond) // 1s
 	}
 }
+
+// func getKubeletAPI() {
+// 	// kubelet API 엔드포인트 URL 설정 (일반적으로 10250 포트 사용)
+// 	kubeletURL := "http://localhost:10250/pods"
+
+// 	// HTTP GET 요청 보내기
+// 	resp, err := http.Get(kubeletURL)
+// 	if err != nil {
+// 		fmt.Printf("HTTP GET 요청 실패: %v\n", err)
+// 		return
+// 	}
+// 	defer resp.Body.Close()
+
+// 	// 응답 본문 읽기
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		fmt.Printf("응답 본문 읽기 실패: %v\n", err)
+// 		return
+// 	}
+
+// 	// 응답 출력
+// 	fmt.Printf("kubelet API 응답:\n%s\n", string(body))
+// }

@@ -2,7 +2,7 @@ import threading
 
 import requests
 
-from kube_client import api
+from kube_client import client
 from utils import regex
 
 lock = threading.Lock()
@@ -14,7 +14,6 @@ def requester(url, deployment):
     url = "127.0.0.1:3001"
 
     response = requests.get('http://' + url + "/api/v1/metrics/" + deployment)
-    print(response.json())
     lock.acquire()  # 작업이 끝나기 전까지 다른 쓰레드가 공유데이터 접근을 금지
     data.append(response.json())
     lock.release()  # lock 해제
@@ -24,7 +23,7 @@ def requester(url, deployment):
 def collect_all_resource_usage_of_deployment(deployment):
     data.clear()
     threads = []
-    nodes = api.get_node_list()
+    nodes = client.get_node_list()
     for node in nodes:
         for ip in node["addresses"]:
             if regex.ip_validation_check(ip["address"]):

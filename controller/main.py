@@ -1,7 +1,7 @@
 import json
 
 from flask import Flask, request
-from kube_client import api
+from kube_client import client
 from manager import handler
 from db import hpa
 
@@ -10,14 +10,14 @@ app = Flask(__name__)
 
 @app.route('/api/v1/node', methods=['GET'])
 def node():
-    ret = api.get_node_list()
+    ret = client.get_node_list()
     print(ret)
     return json.dumps(ret)
 
 
 @app.route('/api/v1/deployment', methods=['GET'])
 def get_deployment():
-    ret = api.get_deployment_list()
+    ret = client.get_deployment_list()
     print(ret)
     return json.dumps(ret)
 

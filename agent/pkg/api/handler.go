@@ -21,11 +21,11 @@ func (rh *RequestHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get Metrics")
 	deployment := strings.Split(r.URL.Path, "api/v1/metrics/")[1]
 	db := database.GetInstance()
-	stats, err := db.GetStat(deployment)
+	stat, err := db.GetStat(deployment)
 	if err != nil {
 		return
 	}
-	res, err := json.Marshal(stats)
+	res, err := json.Marshal(stat)
 	if err != nil {
 		return
 	}
