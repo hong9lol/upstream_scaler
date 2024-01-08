@@ -1,13 +1,43 @@
 import threading
 import time
 from kubernetes import client, config
-
+import logging
 # Kubernetes API 클라이언트 생성
-config.load_kube_config()  # 또는 config.load_incluster_config() 사용
+try:
+    config.load_kube_config()  # 또는 config.load_incluster_config() 사용
+except:
+    print("config for in-cluster")
+    config.load_incluster_config()
+
 api_client = client.ApiClient()
+core_v1 = client.CoreV1Api()
 apps_v1 = client.AppsV1Api(api_client)
 autoscaling_v2 = client.AutoscalingV2Api(api_client)
 namespace = "default"  # 원하는 네임스페이스로 수정
+
+
+def get_agent_list(_namespace):
+    agents = []
+    try:
+        # 파드 목록 가져오기
+        pod_list = core_v1.list_namespaced_pod(_namespace)
+        for pod in pod_list.items:
+            if "controller" in pod.metadata.name:
+                continue
+            p = dict()
+            p["name"] = pod.metadata.name
+            p["pod_ip"] = pod.status.pod_ip
+            p["host_ip"] = pod.status.host_ip
+            agents.append(p)
+        return agents
+        # # 파드 목록 출력
+        # print("파드 목록:")
+        # for pod in pod_list.items:
+        #     print(f"파드 이름: {pod.metadata.name}, IP: {pod.status.podIP}")
+    except Exception as e:
+        logging.warning("Get agent list fail" + str(e))
+    finally:
+        return agents
 
 
 def get_node_list():
@@ -44,7 +74,8 @@ def get_deployment_list():
 
 
 def get_deployment(deployment_name):
-    deployment = apps_v1.read_namespaced_deployment(name=deployment_name, namespace=namespace)
+    deployment = apps_v1.read_namespaced_deployment(
+        name=deployment_name, namespace=namespace)
     d = dict()
     # print(deployment)
     d["name"] = deployment.metadata.name
@@ -81,21 +112,28 @@ def get_hpa_list():
 def update_min_replica(deployment_name, waiting_time):
     time.sleep(waiting_time)  # 대기 시간 동안 일시 중지
     print("-1 replica")
-    deployment = apps_v1.read_namespaced_deployment(name=deployment_name, namespace=namespace)
+    deployment = apps_v1.read_namespaced_deployment(
+        name=deployment_name, namespace=namespace)
     if deployment.spec.replicas > 1:
         deployment.spec.replicas = deployment.spec.replicas - 1
-        apps_v1.replace_namespaced_deployment(name=deployment_name, namespace=namespace, body=deployment)
+        apps_v1.replace_namespaced_deployment(
+            name=deployment_name, namespace=namespace, body=deployment)
 
 
 def set_replica(deployment_name, replica_count):
     try:
         # Deployment 조회
-        deployment = apps_v1.read_namespaced_deployment(name=deployment_name, namespace=namespace)
+        deployment = apps_v1.read_namespaced_deployment(
+            name=deployment_name, namespace=namespace)
         # 새로운 레플리카 개수 설정
         deployment.spec.replicas = replica_count
         # Deployment 업데이트
-        apps_v1.replace_namespaced_deployment(name=deployment_name, namespace=namespace, body=deployment)
+        apps_v1.replace_namespaced_deployment(
+            name=deployment_name, namespace=namespace, body=deployment)  # , field_validation="PATCH")
         # -- min replica after a min.. (it is not work if we handle deployment not hpa)
         # threading.Thread(target=update_min_replica, args=(deployment_name, 60))
+        logging.warning(
+            f"Scale out [{deployment_name}] replicas: {replica_count}")
+
     except Exception as e:
         print(f"Fail update deployment: {str(e)}")

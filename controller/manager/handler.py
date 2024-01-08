@@ -1,8 +1,9 @@
+import logging
 import threading
 import time
 import math
 
-from db import hpa
+from db import hpa as hpa_db, agent as agent_db
 from kube_client import client
 from manager import collector
 
@@ -15,7 +16,16 @@ def hpa_updater():
     interval = 10
     while True:
         hpa_list = client.get_hpa_list()
-        hpa.update_hpas(hpa_list)
+        hpa_db.update_hpas(hpa_list)
+        time.sleep(interval)
+
+
+# TODO: update agent list with event based logic
+def agent_updater():
+    interval = 60  # every 1 min
+    while True:
+        agent_list = client.get_agent_list("upstream-system")
+        agent_db.update_agents(agent_list)
         time.sleep(interval)
 
 
@@ -28,14 +38,17 @@ def remove_from_wait_list(deployment_name, waiting_time):
 def do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization):
     # TODO: get the deployment everytime, make it more efficient
     deployment = client.get_deployment(deployment_name)
-    replica_count = math.ceil(deployment["replicas"] * (current_cpu_usage_rate/target_cpu_utilization))
+    replica_count = math.ceil(
+        deployment["replicas"] * (current_cpu_usage_rate/target_cpu_utilization))
     client.set_replica(deployment_name, replica_count)
     wait_list.append(deployment_name)
-    threading.Thread(target=remove_from_wait_list, args=(deployment_name, 10)).start()
+    threading.Thread(target=remove_from_wait_list,
+                     args=(deployment_name, 10)).start()
     print("Scale out " + deployment_name + ", replicas:" + str(replica_count))
 
 
 def get_cpu_usage_rate_per_sec(pods):
+
     for pod in pods:
         _pod = pods[pod]
         pod_cpu_usage_per_sec = 0.0
@@ -48,11 +61,12 @@ def get_cpu_usage_rate_per_sec(pods):
             usage = last["usage"] - prev["usage"]
             timestamp = last["timestamp"] - prev["timestamp"]
             container_cpu_usage_per_sec += float(usage) / float(timestamp)
-            pod_cpu_usage_per_sec += (container_cpu_usage_per_sec / _container["cpu_request"]) * 100
-            print(container_cpu_usage_per_sec, _container["cpu_request"])
+            pod_cpu_usage_per_sec += (container_cpu_usage_per_sec /
+                                      _container["cpu_request"]) * 100
+            # logging.warning(container_cpu_usage_per_sec,
+            #              _container["cpu_request"])
         pod_cpu_usage_per_sec = pod_cpu_usage_per_sec / len(containers)
     total_cpu_usage_per_sec = pod_cpu_usage_per_sec / len(pods)
-    print(total_cpu_usage_per_sec, pod_cpu_usage_per_sec, len(pods))
 
     return total_cpu_usage_per_sec
 
@@ -70,8 +84,9 @@ def job_handler():
         if wait_list.count(deployment_name) > 0:
             continue
         hpa_name = job["hpa_name"]
-        data = collector.collect_all_resource_usage_of_deployment(deployment_name)
-        _hpa = hpa.get_hpa(hpa_name)
+        data = collector.collect_all_resource_usage_of_deployment(
+            deployment_name)
+        _hpa = hpa_db.get_hpa(hpa_name)
 
         # 알고리즘
         usage_rate = 0.0
@@ -79,24 +94,35 @@ def job_handler():
         for d in data:
             if "pods" not in d:
                 continue
+            if d["pods"] == None:
+                continue
             involved_nodes += 1
             usage_rate += get_cpu_usage_rate_per_sec(d["pods"])
+        if involved_nodes < 1:
+            continue
 
         target_cpu_utilization = 100
-        metrics = _hpa[0]["metrics"]
+        metrics = _hpa["metrics"]
         for metric in metrics:
             if metric["name"] == "cpu":
                 target_cpu_utilization = metric["target_utilization"]
                 break
         current_cpu_usage_rate = usage_rate / involved_nodes
+        logging.warning(
+            f"usage_rate: {usage_rate}, involved_nodes: {involved_nodes}, current_cpu_usage_rate: {current_cpu_usage_rate}, target_cpu_utilization: {target_cpu_utilization}")
         if current_cpu_usage_rate > target_cpu_utilization:
-            do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization)
+            do_scale(deployment_name, current_cpu_usage_rate,
+                     target_cpu_utilization)
 
 
 def start():
     # 매 10초마다 hpa 정보 가져오기
     hpa_updater_thread = threading.Thread(target=hpa_updater)
     hpa_updater_thread.start()
+
+    # 매 10초마다 hpa 정보 가져오기
+    agent_updater_thread = threading.Thread(target=agent_updater)
+    agent_updater_thread.start()
 
     # Job handler
     job_handler_thread = threading.Thread(target=job_handler)
@@ -107,6 +133,7 @@ def start():
 
 def job_enqueue(job):
     if job_list.count(job) > 0:
+        print("This job is already handling, skip it now")
         return
 
     job_list.insert(0, job)

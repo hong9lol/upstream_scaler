@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -84,15 +85,17 @@ func (s *StatCollector) executeRemoteCommand(podName string, namespace string, c
 
 func (s *StatCollector) getAllPods() map[string]entity.Pod {
 	// NODE_NAME 환경 변수 읽기
-	nodeName := os.Getenv("HOST_NAME")
+	nodeName := os.Getenv("NODE_NAME")
 
 	if nodeName == "" {
-		// fmt.Println("HOST_NAME environment variable is not set.")
-		// return nil
+		fmt.Println("NODE_NAME environment variable is not set.")
+		return nil
 	}
 
+	fmt.Println("Node name: ", nodeName)
+
 	// for test
-	nodeName = "minikube-m02"
+	// nodeName = "minikube-m02"
 
 	// fmt.Printf("Get All Pods in Node Name: %s\n", nodeName)
 
@@ -105,6 +108,9 @@ func (s *StatCollector) getAllPods() map[string]entity.Pod {
 		fmt.Printf("Error getting pods: %v\n", err)
 		return nil
 	}
+
+	// TODO
+	// add remove old pod
 
 	podList := map[string]entity.Pod{}
 	// fmt.Printf("Pods on Node %s:\n", nodeName)
@@ -176,7 +182,7 @@ func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa ent
 			podCpuUsage += containerUsagePerSec
 			podCpuUsageRate += (containerUsagePerSec / float64(container.CPURequest)) * 100
 		}
-		fmt.Println(pod.Name, podCpuUsage)
+		fmt.Println(pod.Name, math.Ceil(podCpuUsage))
 
 		podCpuUsageRate = (float64(podCpuUsageRate) / float64(len(pod.Containers)))
 		totalCpuUsageRate += podCpuUsageRate
@@ -286,6 +292,10 @@ func (s *StatCollector) Start(controllerServiceName string) {
 		for _, hpa := range hpas {
 			// 매 초마다 stat 업데이트
 			stat := s.getStat(hpa.Target, podList)
+			if len(stat.Pods) < 1 { // no pod in this node
+				continue
+			}
+
 			updatedStat, err := s.updateStat(stat)
 			if err != nil {
 				fmt.Println(err)
@@ -294,7 +304,7 @@ func (s *StatCollector) Start(controllerServiceName string) {
 				notify := Notify{DeploymentName: hpa.Target, HPAName: hpa.Name}
 				pbytes, _ := json.Marshal(notify)
 				buff := bytes.NewBuffer(pbytes)
-				_, err = http.Post("http://"+controllerServiceName+":5001/api/v1/notify", "application/json", buff)
+				_, err = http.Post("http://"+controllerServiceName+".upstream-system.svc.cluster.local:5001/api/v1/notify", "application/json", buff)
 				if err != nil {
 					panic(err)
 				}

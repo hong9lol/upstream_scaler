@@ -3,29 +3,38 @@ import json
 from flask import Flask, request
 from kube_client import client
 from manager import handler
-from db import hpa
-
+from db import hpa, agent
+import logging
 app = Flask(__name__)
 
 
-@app.route('/api/v1/node', methods=['GET'])
+@app.route('/api/v1/nodes', methods=['GET'])
 def node():
     ret = client.get_node_list()
     print(ret)
     return json.dumps(ret)
 
 
-@app.route('/api/v1/deployment', methods=['GET'])
+@app.route('/api/v1/deployments', methods=['GET'])
 def get_deployment():
     ret = client.get_deployment_list()
     print(ret)
     return json.dumps(ret)
 
 
-@app.route('/api/v1/hpa', methods=['GET'])
+@app.route('/api/v1/hpas', methods=['GET'])
 def get_hpa():
     ret = hpa.get_all_hpas()
-    if ret.count != 0:
+    if len(ret) != 0:
+        return json.dumps(ret)
+    else:
+        return json.dumps([])
+
+
+@app.route('/api/v1/agents', methods=['GET'])
+def get_agent():
+    ret = agent.get_all_agents()
+    if len(ret) != 0:
         return json.dumps(ret)
     else:
         return json.dumps([])

@@ -10,8 +10,11 @@ import (
 )
 
 func (d *DB) UpdateHPA(data []byte) error {
-	hpas := []entity.HPA{}
-	json.Unmarshal(data, &hpas)
+	hpas := map[string]entity.HPA{}
+	e := json.Unmarshal(data, &hpas)
+	if e != nil {
+		fmt.Println(e.Error())
+	}
 	// remove old one
 	err := _db.inst.Batch(func(tx *bolt.Tx) error {
 		vhpa := entity.HPA{}

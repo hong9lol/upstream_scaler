@@ -23,7 +23,7 @@ func (rh *RequestHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	db := database.GetInstance()
 	stat, err := db.GetStat(deployment)
 	if err != nil {
-		return
+		fmt.Println("Can not find the any pod of " + deployment + " in this node")
 	}
 	res, err := json.Marshal(stat)
 	if err != nil {
