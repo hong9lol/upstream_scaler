@@ -20,12 +20,16 @@ def hpa_updater():
         time.sleep(interval)
 
 
+def agent_update():
+    agent_list = client.get_agent_list("upstream-system")
+    agent_db.update_agents(agent_list)
+
+
 # TODO: update agent list with event based logic
 def agent_updater():
     interval = 60  # every 1 min
     while True:
-        agent_list = client.get_agent_list("upstream-system")
-        agent_db.update_agents(agent_list)
+        agent_update()        
         time.sleep(interval)
 
 
