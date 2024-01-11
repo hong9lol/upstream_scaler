@@ -20,6 +20,12 @@ func (h *HPAHandler) Start(controllerServiceName string) {
 	h.controllerServiceName = controllerServiceName
 	db := database.GetInstance()
 
+	resp, err := http.Get("http://" + controllerServiceName + ".upstream-system.svc.cluster.local:5001/api/v1/agent")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
 	for {
 		resp, err := http.Get("http://" + controllerServiceName + ".upstream-system.svc.cluster.local:5001/api/v1/hpas")
 		if err != nil {
