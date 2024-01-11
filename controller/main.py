@@ -31,6 +31,11 @@ def get_hpa():
         return json.dumps([])
 
 
+@app.route('/api/v1/agent', methods=['GET'])
+def update_agent():    
+    handler.agent_update()    
+
+
 @app.route('/api/v1/agents', methods=['GET'])
 def get_agent():
     ret = agent.get_all_agents()
