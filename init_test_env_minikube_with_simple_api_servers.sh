@@ -1,21 +1,21 @@
 #!/bin/sh
+#test environment in minikube with simple api servers
 
 echo ====== Start ======
-
-echo 1. Init Minikube
+echo 1. Delete Previous Environment and Init Minikube 
 minikube delete
 minikube start --nodes=3 --cpus=max
 
-echo 2. Start Simple Application
-kubectl apply -f yaml/simple_app.yaml
-kubectl apply -f yaml/simple_app2.yaml
+echo 2. Start Simple Servers
+kubectl apply -f yaml/simple_server/simple_server.yaml
+kubectl apply -f yaml/simple_server/simple_server2.yaml
 sleep 10
-kubectl expose deployment simple-app --type=LoadBalancer --port=8080 & 
-kubectl expose deployment simple-app2 --type=LoadBalancer --port=8080 & 
+kubectl expose deployment simple-server --type=LoadBalancer --port=8080 & 
+kubectl expose deployment simple-server2 --type=LoadBalancer --port=8080 & 
 
 sleep 20
-minikube service simple-app & 
-minikube service simple-app2 &
+minikube service simple-server & 
+minikube service simple-server2 &
 #minikube service list -n default -o json | jq '.[1].URLs[0]' > target_url.txt
 
 echo 3. Start Metrics-server
@@ -29,7 +29,7 @@ minikube addons enable metrics-server
 # kubectl get deployments.apps -n kube-system metrics-server --template='{{range $k := .spec.template.spec.containers}}{{$k.args}}{{"\n"}}{{end}}' | grep -o 'metric-resolution=[^ ]*'
 sleep 60
 
-kubectl apply -f yaml/hpa.yaml
-kubectl apply -f yaml/hpa2.yaml
+kubectl apply -f yaml/simple_server/simple_server_hpa.yaml
+kubectl apply -f yaml/simple_server/simple_server_hpa2.yaml
 
 echo ====== Done ======
