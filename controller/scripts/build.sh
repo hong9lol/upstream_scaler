@@ -21,7 +21,7 @@ if [ "$1" = "d" ]; then
 
     # run
     cd -
-    ./run.sh k
+    #./run.sh k
 else 
     pip3 install -r ../requirements.txt
     ./run.sh

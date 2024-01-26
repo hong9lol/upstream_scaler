@@ -7,9 +7,11 @@ if [ "$1" = "k" ]; then
     kubectl delete -n upstream-system clusterrolebindings.rbac.authorization.k8s.io upstream-cluster-rolebinding
     kubectl apply -f ../k8s/cluster-role-binding.yaml
     kubectl apply -f ../k8s/controller.yaml
-
-    # if minikube
-    minikube service -n upstream-system upstream-controller
 else
     python3 ../main.py
+fi
+
+# if minikube
+if [ "$2" = "m" ]; then
+    minikube service -n upstream-system upstream-controller
 fi
