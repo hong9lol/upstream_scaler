@@ -15,7 +15,7 @@ def requester(url, deployment):
 
     response = requests.get(
         'http://' + url + ":3001/api/v1/metrics/" + deployment)
-    logging.warning(f"[Collect resource data in node({url})")
+    logging.info(f"[Collect resource data in node({url})")
 
     lock.acquire()  # 작업이 끝나기 전까지 다른 쓰레드가 공유데이터 접근을 금지
     data.append(response.json())

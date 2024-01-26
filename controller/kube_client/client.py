@@ -6,7 +6,7 @@ import logging
 try:
     config.load_kube_config()  # 또는 config.load_incluster_config() 사용
 except:
-    print("config for in-cluster")
+    logging.info("config for in-cluster")
     config.load_incluster_config()
 
 api_client = client.ApiClient()
@@ -31,11 +31,11 @@ def get_agent_list(_namespace):
             agents.append(p)
         return agents
         # # 파드 목록 출력
-        # print("파드 목록:")
+        # logging.info("파드 목록:")
         # for pod in pod_list.items:
-        #     print(f"파드 이름: {pod.metadata.name}, IP: {pod.status.podIP}")
+        #     logging.info(f"파드 이름: {pod.metadata.name}, IP: {pod.status.podIP}")
     except Exception as e:
-        logging.warning("Get agent list fail" + str(e))
+        logging.info("Get agent list fail" + str(e))
     finally:
         return agents
 
@@ -77,7 +77,7 @@ def get_deployment(deployment_name):
     deployment = apps_v1.read_namespaced_deployment(
         name=deployment_name, namespace=namespace)
     d = dict()
-    # print(deployment)
+    # logging.info(deployment)
     d["name"] = deployment.metadata.name
     d["replicas"] = deployment.status.available_replicas
 
@@ -111,7 +111,7 @@ def get_hpa_list():
 
 def update_min_replica(deployment_name, waiting_time):
     time.sleep(waiting_time)  # 대기 시간 동안 일시 중지
-    print("-1 replica")
+    logging.info("-1 replica")
     deployment = apps_v1.read_namespaced_deployment(
         name=deployment_name, namespace=namespace)
     if deployment.spec.replicas > 1:
@@ -132,8 +132,8 @@ def set_replica(deployment_name, replica_count):
             name=deployment_name, namespace=namespace, body=deployment)  # , field_validation="PATCH")
         # -- min replica after a min.. (it is not work if we handle deployment not hpa)
         # threading.Thread(target=update_min_replica, args=(deployment_name, 60))
-        logging.warning(
+        logging.info(
             f"Scale out [{deployment_name}] replicas: {replica_count}")
 
     except Exception as e:
-        print(f"Fail update deployment: {str(e)}")
+        logging.info(f"Fail update deployment: {str(e)}")

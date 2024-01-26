@@ -48,7 +48,7 @@ def do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization):
     wait_list.append(deployment_name)
     threading.Thread(target=remove_from_wait_list,
                      args=(deployment_name, 10)).start()
-    print("Scale out " + deployment_name + ", replicas:" + str(replica_count))
+    logging.info("Scale out " + deployment_name + ", replicas:" + str(replica_count))
 
 
 def get_cpu_usage_rate_per_sec(pods):
@@ -67,7 +67,7 @@ def get_cpu_usage_rate_per_sec(pods):
             container_cpu_usage_per_sec += float(usage) / float(timestamp)
             pod_cpu_usage_per_sec += (container_cpu_usage_per_sec /
                                       _container["cpu_request"]) * 100
-            # logging.warning(container_cpu_usage_per_sec,
+            # logging.info(container_cpu_usage_per_sec,
             #              _container["cpu_request"])
         pod_cpu_usage_per_sec = pod_cpu_usage_per_sec / len(containers)
     total_cpu_usage_per_sec = pod_cpu_usage_per_sec / len(pods)
@@ -112,7 +112,7 @@ def job_handler():
                 target_cpu_utilization = metric["target_utilization"]
                 break
         current_cpu_usage_rate = usage_rate / involved_nodes
-        logging.warning(
+        logging.info(
             f"usage_rate: {usage_rate}, involved_nodes: {involved_nodes}, current_cpu_usage_rate: {current_cpu_usage_rate}, target_cpu_utilization: {target_cpu_utilization}")
         if current_cpu_usage_rate > target_cpu_utilization:
             do_scale(deployment_name, current_cpu_usage_rate,
@@ -137,7 +137,7 @@ def start():
 
 def job_enqueue(job):
     if job_list.count(job) > 0:
-        print("This job is already handling, skip it now")
+        logging.info("This job is already handling, skip it now")
         return
 
     job_list.insert(0, job)

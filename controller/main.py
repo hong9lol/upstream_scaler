@@ -7,18 +7,23 @@ from db import hpa, agent
 import logging
 app = Flask(__name__)
 
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s:%(message)s',
+    level=logging.INFO,
+    datefmt='%m/%d/%Y %I:%M:%S %p',
+)
 
 @app.route('/api/v1/nodes', methods=['GET'])
 def node():
     ret = client.get_node_list()
-    print(ret)
+    logging.info(ret)
     return json.dumps(ret)
 
 
 @app.route('/api/v1/deployments', methods=['GET'])
 def get_deployment():
     ret = client.get_deployment_list()
-    print(ret)
+    logging.info(ret)
     return json.dumps(ret)
 
 
