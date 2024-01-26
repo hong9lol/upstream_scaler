@@ -124,7 +124,7 @@ def start():
     hpa_updater_thread = threading.Thread(target=hpa_updater)
     hpa_updater_thread.start()
 
-    # 매 10초마다 hpa 정보 가져오기
+    # 매 10초마다 agent 정보 가져오기
     agent_updater_thread = threading.Thread(target=agent_updater)
     agent_updater_thread.start()
 
