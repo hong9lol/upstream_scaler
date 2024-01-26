@@ -2,22 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: simple-app
-  name: simple-app
+    app: simple-server
+  name: simple-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: simple-app
+      app: simple-server
   template:
     metadata:
       labels:
-        app: simple-app
+        app: simple-server
     spec:
       containers:
         - image: hong9lol/simple_app:latest
           imagePullPolicy: Always
-          name: simple-app-container1
+          name: simple-server-container1
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -35,7 +35,7 @@ spec:
               cpu: 200m
               memory: 64Mi
         - image: nginx:latest
-          name: simple-app-container2
+          name: simple-server-container2
           resources:
             limits:
               cpu: 100m
