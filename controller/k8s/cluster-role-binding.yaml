@@ -1,35 +1,31 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: upstream-cluster-role
+    name: upstream-cluster-role
 rules:
-  - apiGroups: ["autoscaling"]
-    resources: ["nodes", "pods", "deployments", "horizontalpodautoscalers"]
-    verbs: ["watch", "get", "post", "patch", "update", "create", "list"]
-  - apiGroups: ["apps"]
-    resources:
-      ["nodes", "pods", "pods/exec", "deployments", "horizontalpodautoscalers"]
-    verbs: ["watch", "get", "post", "patch", "update", "create", "list"]
-  - apiGroups: ["core"]
-    resources:
-      ["nodes", "pods", "pods/exec", "deployments", "horizontalpodautoscalers"]
-    verbs: ["watch", "get", "post", "patch", "update", "create", "list"]
-  - apiGroups: [""]
-    resources:
-      ["nodes", "pods", "pods/exec", "deployments", "horizontalpodautoscalers"]
-    verbs: ["watch", "get", "post", "patch", "update", "create", "list"]
-  # 다른 필요한 권한을 여기에 추가할 수 있습니다.
+    - apiGroups: ['autoscaling']
+      resources: ['nodes', 'pods', 'deployments', 'horizontalpodautoscalers']
+      verbs: ['watch', 'get', 'post', 'patch', 'update', 'create', 'list']
+    - apiGroups: ['apps']
+      resources: ['nodes', 'pods', 'pods/exec', 'deployments', 'horizontalpodautoscalers']
+      verbs: ['watch', 'get', 'post', 'patch', 'update', 'create', 'list']
+    - apiGroups: ['core']
+      resources: ['nodes', 'pods', 'pods/exec', 'deployments', 'horizontalpodautoscalers']
+      verbs: ['watch', 'get', 'post', 'patch', 'update', 'create', 'list']
+    - apiGroups: ['']
+      resources: ['nodes', 'pods', 'pods/exec', 'deployments', 'horizontalpodautoscalers']
+      verbs: ['watch', 'get', 'post', 'patch', 'update', 'create', 'list']
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: upstream-cluster-rolebinding
+    name: upstream-cluster-rolebinding
 subjects:
-  - kind: ServiceAccount
-    name: default # 사용자 또는 서비스 계정의 이름을 지정하세요.
-    namespace: upstream-system
+    - kind: ServiceAccount
+      name: default
+      namespace: upstream-system
 roleRef:
-  kind: ClusterRole
-  name: upstream-cluster-role # 위에서 정의한 ClusterRole의 이름을 여기에 지정하세요.
-  apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: upstream-cluster-role
+    apiGroup: rbac.authorization.k8s.io

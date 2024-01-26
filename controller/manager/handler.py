@@ -20,16 +20,16 @@ def hpa_updater():
         time.sleep(interval)
 
 
-def agent_update():
+def update_agents():
     agent_list = client.get_agent_list("upstream-system")
     agent_db.update_agents(agent_list)
 
 
-# TODO: update agent list with event based logic
+# Agents are updated when a new agent is started, do this just in case
 def agent_updater():
     interval = 60  # every 1 min
     while True:
-        agent_update()        
+        update_agents()
         time.sleep(interval)
 
 
@@ -39,20 +39,19 @@ def remove_from_wait_list(deployment_name, waiting_time):
     wait_list.remove(deployment_name)
 
 
-def do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization):
-    # TODO: get the deployment everytime, make it more efficient
+def do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization, hpa_name):
+    # TODO: get the deployment everytime, make it more efficient (let's use deployment db)
     deployment = client.get_deployment(deployment_name)
     replica_count = math.ceil(
-        deployment["replicas"] * (current_cpu_usage_rate/target_cpu_utilization))
-    client.set_replica(deployment_name, replica_count)
+        deployment["replicas"] * (current_cpu_usage_rate / target_cpu_utilization)
+    )
+    client.set_replica(deployment_name, replica_count, hpa_name)
     wait_list.append(deployment_name)
-    threading.Thread(target=remove_from_wait_list,
-                     args=(deployment_name, 10)).start()
+    threading.Thread(target=remove_from_wait_list, args=(deployment_name, 10)).start()
     logging.info("Scale out " + deployment_name + ", replicas:" + str(replica_count))
 
 
 def get_cpu_usage_rate_per_sec(pods):
-
     for pod in pods:
         _pod = pods[pod]
         pod_cpu_usage_per_sec = 0.0
@@ -65,8 +64,9 @@ def get_cpu_usage_rate_per_sec(pods):
             usage = last["usage"] - prev["usage"]
             timestamp = last["timestamp"] - prev["timestamp"]
             container_cpu_usage_per_sec += float(usage) / float(timestamp)
-            pod_cpu_usage_per_sec += (container_cpu_usage_per_sec /
-                                      _container["cpu_request"]) * 100
+            pod_cpu_usage_per_sec += (
+                container_cpu_usage_per_sec / _container["cpu_request"]
+            ) * 100
             # logging.info(container_cpu_usage_per_sec,
             #              _container["cpu_request"])
         pod_cpu_usage_per_sec = pod_cpu_usage_per_sec / len(containers)
@@ -88,20 +88,23 @@ def job_handler():
         if wait_list.count(deployment_name) > 0:
             continue
         hpa_name = job["hpa_name"]
-        data = collector.collect_all_resource_usage_of_deployment(
-            deployment_name)
+        all_resource_usage_of_deployment = (
+            collector.collect_all_resource_usage_of_deployment(deployment_name)
+        )
         _hpa = hpa_db.get_hpa(hpa_name)
 
-        # 알고리즘
+        # algorithm
         usage_rate = 0.0
         involved_nodes = 0
-        for d in data:
-            if "pods" not in d:
+        for resource_usage_of_deployment in all_resource_usage_of_deployment:
+            if "pods" not in resource_usage_of_deployment:
                 continue
-            if d["pods"] == None:
+            if resource_usage_of_deployment["pods"] == None:
                 continue
             involved_nodes += 1
-            usage_rate += get_cpu_usage_rate_per_sec(d["pods"])
+            usage_rate += get_cpu_usage_rate_per_sec(
+                resource_usage_of_deployment["pods"]
+            )
         if involved_nodes < 1:
             continue
 
@@ -113,10 +116,15 @@ def job_handler():
                 break
         current_cpu_usage_rate = usage_rate / involved_nodes
         logging.info(
-            f"usage_rate: {usage_rate}, involved_nodes: {involved_nodes}, current_cpu_usage_rate: {current_cpu_usage_rate}, target_cpu_utilization: {target_cpu_utilization}")
+            f"usage_rate: {usage_rate}, involved_nodes: {involved_nodes}, current_cpu_usage_rate: {current_cpu_usage_rate}, target_cpu_utilization: {target_cpu_utilization}"
+        )
         if current_cpu_usage_rate > target_cpu_utilization:
-            do_scale(deployment_name, current_cpu_usage_rate,
-                     target_cpu_utilization)
+            do_scale(
+                deployment_name,
+                current_cpu_usage_rate,
+                target_cpu_utilization,
+                hpa_name,
+            )
 
 
 def start():

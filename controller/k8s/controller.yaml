@@ -1,79 +1,42 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: upstream-controller
-  namespace: upstream-system
-  labels:
-    k8s-app: upstream-controller
+    name: upstream-controller
+    namespace: upstream-system
+    labels:
+        k8s-app: upstream-controller
 spec:
-  selector:
-    matchLabels:
-      name: upstream-controller
-  template:
-    metadata:
-      labels:
-        name: upstream-controller
-    spec:
-      tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-      containers:
-        - name: controller
-          image: hong9lol/upstream-controller:0.1
-          imagePullPolicy: Always
-          ports:
-            - name: http
-              containerPort: 5001
-              protocol: TCP
-      #   - name: cadvisor
-      #     image: gcr.io/cadvisor/cadvisor:v0.39.3
-      #     volumeMounts:
-      #       - name: rootfs
-      #         mountPath: /rootfs
-      #         readOnly: true
-      #       - name: var-run
-      #         mountPath: /var/run
-      #         readOnly: false
-      #       - name: sys
-      #         mountPath: /sys
-      #         readOnly: true
-      #       - name: docker
-      #         mountPath: /var/lib/docker
-      #         readOnly: true
-      #     ports:
-      #       - name: http
-      #         containerPort: 11680
-      #         protocol: TCP
-      #     args:
-      #       - --profiling
-      #       - --housekeeping_interval=1s
-      #       - --disable_metrics=accelerator,cpu_topology,disk,diskIO,memory_numa,network,tcp,udp,percpu,sched,process,hugetlb,referenced_memory,resctrl,cpuset
-      # terminationGracePeriodSeconds: 30
-      # volumes:
-      #   - name: rootfs
-      #     hostPath:
-      #       path: /
-      #   - name: var-run
-      #     hostPath:
-      #       path: /var/run
-      #   - name: sys
-      #     hostPath:
-      #       path: /sys
-      #   - name: docker
-      #     hostPath:
-      #       path: /var/lib/docker
+    selector:
+        matchLabels:
+            name: upstream-controller
+    template:
+        metadata:
+            labels:
+                name: upstream-controller
+        spec:
+            tolerations:
+                - key: node-role.kubernetes.io/master
+                  effect: NoSchedule
+            containers:
+                - name: controller
+                  image: hong9lol/upstream-controller:0.1
+                  imagePullPolicy: Always
+                  ports:
+                      - name: http
+                        containerPort: 5001
+                        protocol: TCP
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: upstream-controller # 서비스의 이름을 지정합니다.
-  namespace: upstream-system
+    name: upstream-controller # 서비스의 이름
+    namespace: upstream-system
 spec:
-  selector:
-    name: upstream-controller # Deployment의 Pod를 선택하기 위한 라벨 셀렉터를 지정합니다.
-  ports:
-    - protocol: TCP
-      port: 5001 # 서비스가 리스닝하는 포트를 지정합니다.
-      targetPort: 5001 # Pod 내부의 컨테이너에서 수신하는 포트를 지정합니다.
-  type: LoadBalancer # 서비스 유형을 LoadBalancer로 설정합니다.
+    selector:
+        name: upstream-controller # Deployment의 Pod를 선택하기 위한 라벨 셀렉터
+    ports:
+        - protocol: TCP
+          port: 5001 # 서비스가 리스닝하는 포트
+          targetPort: 5001 # Pod 내부의 컨테이너에서 수신하는 포트
+    type: LoadBalancer # 서비스 유형
