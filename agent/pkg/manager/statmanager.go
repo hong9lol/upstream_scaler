@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hong9lol/upstream_scaler/tree/master/agent/pkg/config"
 	database "github.com/hong9lol/upstream_scaler/tree/master/agent/pkg/db"
 	entity "github.com/hong9lol/upstream_scaler/tree/master/agent/pkg/db/entity"
+	"github.com/hong9lol/upstream_scaler/tree/master/agent/pkg/util"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -83,6 +84,15 @@ func (s *StatCollector) executeRemoteCommand(podName string, namespace string, c
 	return buf.String(), time.Now().UnixMilli(), errBuf.String(), nil
 }
 
+func (s *StatCollector) readStat(metricPath string) (string, int64) {
+	// fmt.Println(metricPath + "/cpu.stat")
+	ret, err := util.ExecCommand("cat", metricPath+"/cpu.stat")
+	if err != nil {
+		panic(err)
+	}
+	return ret, time.Now().UnixMilli()
+}
+
 func (s *StatCollector) getAllPods() map[string]entity.Pod {
 	// NODE_NAME 환경 변수 읽기
 	nodeName := os.Getenv("NODE_NAME")
@@ -111,9 +121,9 @@ func (s *StatCollector) getAllPods() map[string]entity.Pod {
 
 	// TODO
 	// add remove old pod
-
 	podList := map[string]entity.Pod{}
 	// fmt.Printf("Pods on Node %s:\n", nodeName)
+
 	for _, podItem := range pods.Items {
 		// fmt.Printf("Name: %s\n", podItem.Name)
 		// fmt.Printf("Namespace: %s\n", podItem.Namespace)
@@ -123,13 +133,30 @@ func (s *StatCollector) getAllPods() map[string]entity.Pod {
 		}
 		// fmt.Println("---")
 		containerList := map[string]entity.Container{}
-		for _, containerItem := range podItem.Spec.Containers {
-			// fmt.Printf("Container Name: %s\n", containerItem.Name)
+		// fmt.Printf("Container Name: %s\n", podItem)
+		for _, containerSpec := range podItem.Spec.Containers {
+			// fmt.Printf("Container Name: %s\n", containerSpec.Name)
 			container := entity.Container{
-				Name:       containerItem.Name,
-				CPURequest: containerItem.Resources.Requests.Cpu().MilliValue(),
+				Name:       containerSpec.Name,
+				CPURequest: containerSpec.Resources.Requests.Cpu().MilliValue(),
 			}
 			containerList[container.Name] = container
+		}
+		// fmt.Printf("Container #1: %s\n", containerList)
+		for _, containerStatus := range podItem.Status.ContainerStatuses {
+			_container := containerList[containerStatus.Name]
+			containerID := containerStatus.ContainerID
+			// start := time.Now()
+			containerID = strings.Split(containerID, "containerd://")[1]
+			_arg := "*" + containerID + "*"
+			path, err := util.ExecCommand("find", "/host", "-name", _arg)
+			if err != nil {
+				panic(err)
+			}
+			// end := time.Since(start)
+			// fmt.Println("execution time:", end)
+			_container.MetricPath = strings.Split(path, "\n")[0]
+			containerList[containerStatus.Name] = _container
 		}
 		pod := entity.Pod{
 			Name:       podItem.Name,
@@ -174,6 +201,8 @@ func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa ent
 	podCpuUsageRate := 0.0
 
 	// total cpu usage rate
+	fmt.Println("\n[ Resource Usage Info of dployment:", deployment.Name, "]")
+	fmt.Println("Pods [", len(deployment.Pods), "]")
 	for _, pod := range deployment.Pods {
 		podCpuUsage := 0.0
 		podCpuUsageRate = 0
@@ -182,13 +211,13 @@ func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa ent
 			podCpuUsage += containerUsagePerSec
 			podCpuUsageRate += (containerUsagePerSec / float64(container.CPURequest)) * 100
 		}
-		fmt.Println(pod.Name, math.Ceil(podCpuUsage))
+		fmt.Println(" -", pod.Name, ", CPU Usage:", math.Ceil(podCpuUsage))
 
 		podCpuUsageRate = (float64(podCpuUsageRate) / float64(len(pod.Containers)))
 		totalCpuUsageRate += podCpuUsageRate
 	}
 	totalCpuUsageRate = (totalCpuUsageRate / float64(len(deployment.Pods)))
-	fmt.Println(totalCpuUsageRate)
+	fmt.Println("Total CPU Usage Rate(%): \n\n", totalCpuUsageRate)
 
 	// support only cpu resouce currently
 	// check if it is higher than hpa.Metrics
@@ -253,9 +282,10 @@ func (s *StatCollector) getStat(deploymentName string, podList map[string]entity
 			for _, container := range pod.Containers {
 				// wg.Add(1)
 				func() {
-					// TODO: get this info from runc project
-					usageStr, timestamp, _, _ := s.executeRemoteCommand(pod.Name, config.NAMESPACE, container.Name, "head -1 /sys/fs/cgroup/cpu.stat")
-					usageInt64, err := strconv.ParseInt(strings.Split(strings.Split(usageStr, " ")[1], "\r")[0], 10, 64)
+					// usageStr, timestamp, _, _ := s.executeRemoteCommand(pod.Name, config.NAMESPACE, container.Name, "head -1 /sys/fs/cgroup/cpu.stat")
+					// usageInt64, err := strconv.ParseInt(strings.Split(strings.Split(usageStr, " ")[1], "\r")[0], 10, 64)
+					usageStr, timestamp := s.readStat(container.MetricPath)
+					usageInt64, err := strconv.ParseInt(strings.Split(strings.Split(usageStr, " ")[1], "\n")[0], 10, 64)
 					// fmt.Println(container.Name, usageInt64, timestamp)
 					if err != nil {
 						fmt.Println("conversion error:", err)
@@ -285,10 +315,16 @@ func (s *StatCollector) getStat(deploymentName string, podList map[string]entity
 func (s *StatCollector) Start(controllerServiceName string) {
 	s.initK8sConfig()
 	db := database.GetInstance()
+	var hpas []entity.HPA = db.GetAllHPA()
+	var podList map[string]entity.Pod = s.getAllPods()
+	statusInterval := 0
 	for {
-		// TODO: Check old deployment in db and remove it
-		hpas := db.GetAllHPA()
-		podList := s.getAllPods()
+		if statusInterval > 14 { // update every 15s
+			hpas = db.GetAllHPA()
+			podList = s.getAllPods()
+			statusInterval = 0
+		}
+
 		for _, hpa := range hpas {
 			// 매 초마다 stat 업데이트
 			stat := s.getStat(hpa.Target, podList)
@@ -310,6 +346,7 @@ func (s *StatCollector) Start(controllerServiceName string) {
 				}
 			}
 		}
+		statusInterval++
 		time.Sleep(1000 * time.Millisecond) // 1s
 	}
 }

@@ -29,16 +29,3 @@ func (q *Queue) Enqueue(v interface{}) {
 
 	Mutex.Unlock()
 }
-
-// func (q *Queue) GetAll() *list.List{} {
-// 	return q.v
-// }
-
-// func (q *Queue) Dequeue() interface{} {
-// 	front := q.v.Front()
-// 	if front == nil {
-// 		return nil
-// 	}
-
-// 	return q.v.Remove(front)
-// }

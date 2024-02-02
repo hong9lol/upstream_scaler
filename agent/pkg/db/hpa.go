@@ -13,7 +13,7 @@ func (d *DB) UpdateHPA(data []byte) error {
 	hpas := map[string]entity.HPA{}
 	e := json.Unmarshal(data, &hpas)
 	if e != nil {
-		fmt.Println(e.Error())
+		fmt.Println(e.Error() + "TEST1")
 	}
 	// remove old one
 	err := _db.inst.Batch(func(tx *bolt.Tx) error {
@@ -70,7 +70,6 @@ func (d *DB) GetAllHPA() []entity.HPA {
 	err := _db.inst.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("HPA"))       // get all HPA bucket
 		b.ForEach(func(k, v []byte) error { // find if it is included the new hpa list
-			// fmt.Println(string(v))
 			json.Unmarshal(v, &hpa)
 			hpas = append(hpas, hpa)
 			return nil

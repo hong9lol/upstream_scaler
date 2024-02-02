@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func execCommand(command string, args ...string) (string, error) {
+func ExecCommand(command string, args ...string) (string, error) {
 	// Create an *exec.Cmd instance for the given command and its arguments
 	cmd := exec.Command(command, args...)
 

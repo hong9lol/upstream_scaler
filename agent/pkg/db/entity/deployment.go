@@ -15,6 +15,7 @@ type Container struct {
 	Name       string  `json:"container_name"`
 	CPURequest int64   `json:"cpu_request"`
 	Usages     []Usage `json:"usages"`
+	MetricPath string  `json:"metric_path"`
 }
 
 type Usage struct {
