@@ -28,8 +28,8 @@ def update_agents(new_agent_list):
             agent_list[new_agent["name"]] = new_agent
 
     # maybe just... TODO need to check it works well
-    agent_list.clear()
-    agent_list.update(new_agent_list)
+    # agent_list.clear()
+    # agent_list.update(new_agent_list)
 
 
 def get_all_agents():

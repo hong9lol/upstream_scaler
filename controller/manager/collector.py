@@ -33,12 +33,6 @@ def collect_all_resource_usage_of_deployment(deployment):
             threads.append(
                 threading.Thread(target=request_resource_info, args=(_ip, deployment))
             )
-    # nodes = client.get_node_list()
-    # for node in nodes:
-    #     for ip in node["addresses"]:
-    #         if regex.ip_validation_check(ip["address"]):
-    #             threads.append(threading.Thread(
-    #                 target=requester, args=(ip["address"], deployment)))
 
     for thread in threads:
         thread.start()

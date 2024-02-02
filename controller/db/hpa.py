@@ -26,8 +26,8 @@ def update_hpas(new_hpa_list):
             hpa_list[new_hpa["name"]] = new_hpa
 
     # maybe just... TODO need to check it works well
-    hpa_list.clear()
-    hpa_list.update(new_hpa_list)
+    # hpa_list.clear()
+    # hpa_list.update(new_hpa_list)
 
 
 def get_all_hpas():
