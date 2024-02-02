@@ -5,6 +5,7 @@ echo ====== Start ======
 echo 1. Delete Previous Environment and Init Minikube 
 minikube delete
 minikube start --nodes=3 --cpus=max
+# minikube mount /sys/fs/cgroup:/host/sys/fs/cgroup
 
 echo 2. Start Simple Servers
 kubectl apply -f yaml/simple_server/simple_server.yaml
@@ -29,6 +30,7 @@ minikube addons enable metrics-server
 # kubectl get deployments.apps -n kube-system metrics-server --template='{{range $k := .spec.template.spec.containers}}{{$k.args}}{{"\n"}}{{end}}' | grep -o 'metric-resolution=[^ ]*'
 sleep 60
 
+echo 4. Start HPA
 kubectl apply -f yaml/simple_server/simple_server_hpa.yaml
 kubectl apply -f yaml/simple_server/simple_server_hpa2.yaml
 
