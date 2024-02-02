@@ -19,3 +19,6 @@
 
 # Go workspace file
 go.work
+
+build/docker/agent
+build/output/agent
