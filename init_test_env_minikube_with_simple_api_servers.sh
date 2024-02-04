@@ -34,4 +34,8 @@ echo 4. Start HPA
 kubectl apply -f yaml/simple_server/simple_server_hpa.yaml
 kubectl apply -f yaml/simple_server/simple_server_hpa2.yaml
 
+echo 5. Kubelet Auth
+kubectl apply -f yaml/kubelet_auth/server_account.yaml
+kubectl apply -f yaml/kubelet_auth/cluster_role_binding_auth.yaml
+
 echo ====== Done ======

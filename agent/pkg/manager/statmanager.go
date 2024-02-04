@@ -3,8 +3,12 @@ package manager
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -17,7 +21,6 @@ import (
 	"github.com/hong9lol/upstream_scaler/tree/master/agent/pkg/util"
 
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -29,6 +32,9 @@ type StatCollector struct {
 	kubeCfg    clientcmd.ClientConfig
 	restCfg    *rest.Config
 	coreClient *kubernetes.Clientset
+
+	client *http.Client
+	req    *http.Request
 }
 type Notify struct {
 	DeploymentName string `json:"deployment_name"`
@@ -104,16 +110,13 @@ func (s *StatCollector) getAllPods() map[string]entity.Pod {
 
 	fmt.Println("Node name: ", nodeName)
 
-	// for test
-	// nodeName = "minikube-m02"
-
-	// fmt.Printf("Get All Pods in Node Name: %s\n", nodeName)
-
 	// 현재 노드에서 실행 중인 Pod 가져오기
 	// TODO: need to change to get this info from kubelet api
-	pods, err := s.coreClient.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
-	})
+	// pods, err := s.coreClient.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{
+	// 	FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
+	// })
+
+	pods, err := s.getPods(s.client, s.req)
 	if err != nil {
 		fmt.Printf("Error getting pods: %v\n", err)
 		return nil
@@ -217,7 +220,8 @@ func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa ent
 		totalCpuUsageRate += podCpuUsageRate
 	}
 	totalCpuUsageRate = (totalCpuUsageRate / float64(len(deployment.Pods)))
-	fmt.Println("Total CPU Usage Rate(%): \n\n", totalCpuUsageRate)
+	fmt.Println("Total CPU Usage Rate(%):", totalCpuUsageRate)
+	fmt.Fprintln(os.Stdout, []any{"\n"}...)
 
 	// support only cpu resouce currently
 	// check if it is higher than hpa.Metrics
@@ -314,6 +318,7 @@ func (s *StatCollector) getStat(deploymentName string, podList map[string]entity
 
 func (s *StatCollector) Start(controllerServiceName string) {
 	s.initK8sConfig()
+	s.initKubeletClient()
 	db := database.GetInstance()
 	var hpas []entity.HPA = db.GetAllHPA()
 	var podList map[string]entity.Pod = s.getAllPods()
@@ -351,25 +356,71 @@ func (s *StatCollector) Start(controllerServiceName string) {
 	}
 }
 
-// func getKubeletAPI() {
-// 	// kubelet API 엔드포인트 URL 설정 (일반적으로 10250 포트 사용)
-// 	kubeletURL := "http://localhost:10250/pods"
+func (s *StatCollector) getPods(client *http.Client, req *http.Request) (v1.PodList, error) {
+	// Load the CA certificate.
+	// Set up HTTPS client with the loaded CA certificate and token.
+	//nodeNamehttps://$NODE_NAME:10250/pods
+	// resp, err := client.Get("https://" + nodeName + ":10250/pods")
+	// Prepare the request.
+	// client, req := newFunction()
 
-// 	// HTTP GET 요청 보내기
-// 	resp, err := http.Get(kubeletURL)
-// 	if err != nil {
-// 		fmt.Printf("HTTP GET 요청 실패: %v\n", err)
-// 		return
-// 	}
-// 	defer resp.Body.Close()
+	// Perform the request.
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("HTTP GET 요청 실패: %v\n", err)
+		// return
+	}
+	defer resp.Body.Close()
 
-// 	// 응답 본문 읽기
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		fmt.Printf("응답 본문 읽기 실패: %v\n", err)
-// 		return
-// 	}
+	// 응답 본문 읽기
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("응답 본문 읽기 실패: %v\n", err)
+		// return
+	}
 
-// 	// 응답 출력
-// 	fmt.Printf("kubelet API 응답:\n%s\n", string(body))
-// }
+	// 응답 출력
+	// fmt.Printf("kubelet API 응답:\n%s\n", string(body))
+
+	podList := v1.PodList{}
+	err = json.Unmarshal([]byte(body), &podList)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return podList, err
+}
+
+func (s *StatCollector) initKubeletClient() (*http.Client, *http.Request) {
+	token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	if err != nil {
+		panic(err)
+	}
+
+	caCert, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+	if err != nil {
+		panic(err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs:            caCertPool,
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
+	nodeName := os.Getenv("NODE_NAME")
+
+	req, err := http.NewRequest("GET", "https://"+nodeName+":10250/pods", nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Authorization", "Bearer "+string(token))
+	s.req = req
+	s.client = client
+	return client, req
+}
