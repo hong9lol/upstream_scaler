@@ -21,6 +21,7 @@ spec:
             containers:
                 - name: agent
                   image: hong9lol/upstream-agent:0.1
+                  #   image: localhost:5000/upstream-agent:0.1
                   imagePullPolicy: Always
                   ports:
                       - name: http
@@ -99,7 +100,8 @@ spec:
             # - name: cgroup
             #   hostPath:
             #       path: '/sys/fs/cgroup/system.slice'
-
+            imagePullSecrets:
+                - name: secret-jake
 ---
 # apiVersion: v1
 # kind: Service
