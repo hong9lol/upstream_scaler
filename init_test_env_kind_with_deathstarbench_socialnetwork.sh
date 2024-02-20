@@ -1,6 +1,12 @@
 #!/bin/sh
 
 echo ====== Start ======
+
+# solution of "failed to create fsnotify watcher: too many open files"
+sudo sysctl -w fs.inotify.max_user_watches=2099999999
+sudo sysctl -w fs.inotify.max_user_instances=2099999999
+sudo sysctl -w fs.inotify.max_queued_events=2099999999
+
 echo 1. Delete Previous Environment and Create new Environment
 kind delete cluster --name my-cluster
 kind create cluster --name my-cluster --config ./yaml/kind/kind.yaml
@@ -21,6 +27,8 @@ envsubst < yaml/metal-lb/metal-lb.yaml | kubectl apply -f-
 sleep 10
 
 echo 2-3. Install helm packages
+kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@
+kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@ -n upstream-system
 kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
 helm uninstall social-network --wait
 helm install social-network --wait ./DeathStarBench/socialNetwork/helm-chart/socialnetwork/
@@ -30,29 +38,44 @@ kubectl delete -n kube-system deployments.apps metrics-server
 kubectl apply -f yaml/metrics-server/metrics-server.yaml
 sleep 10
 
-echo 4. Upstream controller and agents
-cd ./controller/scripts
-./run.sh k &
-cd -
-sleep 20
-cd ./agent/scripts
+if [ "$1" = "default" ]; then
+    echo Skip Step 4, 5 for upstream scaler
+else
+    echo 4. Upstream controller and agents
+    # build
+    cd ./controller/scripts
+    ./build.sh d
+    cd -
+    cd ./agent/scripts
+    ./build.sh d
+    cd -
 
-./run.sh k &
-cd -
-sleep 20
+    cd ./controller/scripts
+    ./run.sh k &
+    cd -
+    cd ./agent/scripts
+    ./run.sh k &
+    cd -
 
-echo 5. Auth for using Kubelet API agent
-kubectl apply -f yaml/kubelet_auth/service_account.yaml
-kubectl apply -f yaml/kubelet_auth/cluster_role_binding_auth.yaml
+    echo 5. Auth for using Kubelet API agent
+    kubectl apply -f yaml/kubelet_auth/service_account.yaml
+    kubectl apply -f yaml/kubelet_auth/cluster_role_binding_auth.yaml
+fi
+sleep 60
 
 echo 6. Run Log
 cd ./DeathStarBench/socialNetwork/benchmark_scripts
 baseLogPath=./log
 currentTime=`date +"%m-%d_%H%M%S"`
 mkdir $baseLogPath/$currentTime
-logPath=$baseLogPathPath/$currentTime
+logPath=$baseLogPath/$currentTime
 ./log.sh $logPath & log=$!
+
+echo 7. Run Benchmark
+./run_social_benchmark.sh $logPath
 cd -
 
+echo 8. Kill Log Proc
 kill -9 $log
+
 echo ====== Done ======
