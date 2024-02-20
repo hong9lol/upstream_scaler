@@ -61,6 +61,7 @@ def added_agent():
 @app.route("/api/v1/notify", methods=["POST"])
 def notify():
     job = json.loads(request.get_data())
+    logging.error(job)
     try:
         handler.job_enqueue(job)
         return "Success", 200

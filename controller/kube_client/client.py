@@ -29,10 +29,14 @@ def get_agent_list(_namespace):
             p["pod_ip"] = pod.status.pod_ip
             p["host_ip"] = pod.status.host_ip
             agents.append(p)
+            logging.error(pod.metadata.name)
+            logging.error(pod.status.pod_ip)
             # 파드 목록 출력
-        logging.info("파드 목록:")
-        for pod in pod_list.items:
-            logging.info(f"Pod Name: {pod.metadata.name}, IP: {pod.status.podIP}")
+        # logging.info("파드 목록:")
+        # for pod in pod_list.items:
+        #     logging.info(f"Pod Name: {pod.metadata.name}, IP: {pod.status.pod_ip}")
+
+        logging.error(agents)
         return agents
     except Exception as e:
         logging.error("Get agent list fail" + str(e))
@@ -149,6 +153,7 @@ def set_replica(deployment_name, replica_count, hpa_name):
         threading.Thread(
             target=reset_min_replica, args=(hpa_name, init_min_replicas, 60)
         )
+        logging.error(f"Scale out [{deployment_name}] replicas: {replica_count}")
         logging.info(f"Scale out [{deployment_name}] replicas: {replica_count}")
 
     except Exception as e:
