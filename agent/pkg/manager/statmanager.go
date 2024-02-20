@@ -94,7 +94,8 @@ func (s *StatCollector) readStat(metricPath string) (string, int64) {
 	// fmt.Println(metricPath + "/cpu.stat")
 	ret, err := util.ExecCommand("cat", metricPath+"/cpu.stat")
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error to read stat: %v\n", err)
+		return "0 0\n", time.Now().UnixMilli()
 	}
 	return ret, time.Now().UnixMilli()
 }
@@ -189,14 +190,19 @@ func (s *StatCollector) calUsagePerSec(container entity.Container) float64 {
 		return 0
 	}
 	usagePerSec := 0.0
+	cnt := 5.0
 	for i := 0; i < 5; i++ {
+		if container.Usages[len(container.Usages)-(i+1)] == 0 || container.Usages[len(container.Usages)-(i+2)] == 0 {
+			cnt -= 1.0
+			continue
+		}
 		last := container.Usages[len(container.Usages)-(i+1)]
 		prev := container.Usages[len(container.Usages)-(i+2)]
 		usagePerSec += calUsage(last, prev)
 	}
 	// fmt.Println(container.Name, (usage / timpestamp), "\n", container.Usages)
 	// usageRatePerSec := usagePerSec / container.CPURequest
-	return usagePerSec / 5.0
+	return usagePerSec / cnt
 }
 
 func (s *StatCollector) checkResourceUsage(deployment entity.Deployment, hpa entity.HPA) bool {
