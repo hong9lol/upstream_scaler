@@ -59,8 +59,10 @@ def get_cpu_usage_rate_per_sec(pods):
         for container in containers:
             container_cpu_usage_per_sec = 0.0
             _container = containers[container]
-            last = _container["usages"][len(_container) - 1]
-            prev = _container["usages"][len(_container) - 2]
+            logging.error(_container)
+            logging.error(len(_container["usages"]))
+            last = _container["usages"][len(_container["usages"]) - 1]
+            prev = _container["usages"][len(_container["usages"]) - 2]
             usage = last["usage"] - prev["usage"]
             timestamp = last["timestamp"] - prev["timestamp"]
             container_cpu_usage_per_sec += float(usage) / float(timestamp)
@@ -88,22 +90,23 @@ def job_handler():
         if wait_list.count(deployment_name) > 0:
             continue
         hpa_name = job["hpa_name"]
-        all_resource_usage_of_deployment = (
-            collector.collect_all_resource_usage_of_deployment(deployment_name)
+        all_agent_resource_of_deployment = (
+            collector.collect_all_agent_resource_of_deployment(deployment_name)
         )
+
         _hpa = hpa_db.get_hpa(hpa_name)
 
         # algorithm
         usage_rate = 0.0
         involved_nodes = 0
-        for resource_usage_of_deployment in all_resource_usage_of_deployment:
-            if "pods" not in resource_usage_of_deployment:
+        for agent_resource_of_deployment in all_agent_resource_of_deployment:
+            if "pods" not in agent_resource_of_deployment:
                 continue
-            if resource_usage_of_deployment["pods"] == None:
+            if agent_resource_of_deployment["pods"] == None:
                 continue
             involved_nodes += 1
             usage_rate += get_cpu_usage_rate_per_sec(
-                resource_usage_of_deployment["pods"]
+                agent_resource_of_deployment["pods"]
             )
         if involved_nodes < 1:
             continue
@@ -115,6 +118,9 @@ def job_handler():
                 target_cpu_utilization = metric["target_utilization"]
                 break
         current_cpu_usage_rate = usage_rate / involved_nodes
+        logging.error(
+            f"deployment: {deployment_name}, usage_rate: {usage_rate}, involved_nodes: {involved_nodes}, current_cpu_usage_rate: {current_cpu_usage_rate}, target_cpu_utilization: {target_cpu_utilization}"
+        )
         logging.info(
             f"usage_rate: {usage_rate}, involved_nodes: {involved_nodes}, current_cpu_usage_rate: {current_cpu_usage_rate}, target_cpu_utilization: {target_cpu_utilization}"
         )
@@ -132,7 +138,7 @@ def start():
     hpa_updater_thread = threading.Thread(target=hpa_updater)
     hpa_updater_thread.start()
 
-    # 매 10초마다 agent 정보 가져오기
+    # 매 60초마다 agent 정보 가져오기
     agent_updater_thread = threading.Thread(target=agent_updater)
     agent_updater_thread.start()
 

@@ -22,7 +22,7 @@ def request_resource_info(url, deployment):
 
 
 # need to be thread safe... don't call this multiple times at the same time
-def collect_all_resource_usage_of_deployment(deployment):
+def collect_all_agent_resource_of_deployment(deployment):
     resources.clear()
     threads = []
     agents = agent_db.get_all_agents()
