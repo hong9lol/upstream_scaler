@@ -15,4 +15,7 @@ cd -
 echo 3. Kill Log Proc
 kill -9 $log
 
+# 파드 리스트 가져오기
+./time_checker.sh
+
 echo ====== Done ======
