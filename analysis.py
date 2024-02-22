@@ -1,7 +1,7 @@
 import os
 
 # 디렉토리 경로 설정
-directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/0222_1"
+directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/0222_2"
 
 # 해당 디렉토리 내의 모든 폴더를 찾습니다.
 folders = [
@@ -70,6 +70,7 @@ for folder in sorted_folders:
                     d[key][0] += 1
                     d[key].append(line.split(" ")[2])
                 else:
+                    print(line)
                     d[key] = [1, line.split(" ")[2]]
         _l = []
         for key, item in d.items():
@@ -83,7 +84,7 @@ import pandas as pd
 import os
 
 print(result)
-writer = pd.ExcelWriter("my_data.xlsx")
+writer = pd.ExcelWriter("data.xlsx")
 idx = 0
 for key, item in result.items():
     print("Type:", item[0])
