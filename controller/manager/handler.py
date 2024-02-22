@@ -47,7 +47,8 @@ def do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization, hp
     )
     client.set_replica(deployment_name, replica_count, hpa_name)
     wait_list.append(deployment_name)
-    threading.Thread(target=remove_from_wait_list, args=(deployment_name, 10)).start()
+    # pod 생성 시간을 고려하여 약 15초간 해당 deployment는 slcaling 동작하지 않음
+    threading.Thread(target=remove_from_wait_list, args=(deployment_name, 15)).start()
     logging.info("Scale out " + deployment_name + ", replicas:" + str(replica_count))
 
 
