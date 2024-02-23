@@ -82,4 +82,7 @@ kill -9 $log
 ./time_checker.sh $1
 mv podcnt.txt ./DeathStarBench/socialNetwork/benchmark_scripts/$logPath/podcnt.txt
 
+kubectl logs -n upstream-system deployments/upstream-controller >> controller.log
+mv controller.log ./DeathStarBench/socialNetwork/benchmark_scripts/$logPath/controller.log
+
 echo ====== Done ======

@@ -57,6 +57,8 @@ def get_cpu_usage_rate_per_sec(pods):
         _pod = pods[pod]
         pod_cpu_usage_per_sec = 0.0
         containers = _pod["containers"]
+        if containers == None:
+            return 0.0
         for container in containers:
             container_cpu_usage_per_sec = 0.0
             _container = containers[container]
@@ -82,8 +84,8 @@ def job_handler():
     interval = 1
     # if it is needed, do scale changing min pods
     while True:
+        time.sleep(interval)
         if is_empty():
-            time.sleep(interval)
             continue
 
         job = job_dequeue()
@@ -146,6 +148,7 @@ def start():
     # Job handler
     job_handler_thread = threading.Thread(target=job_handler)
     job_handler_thread.start()
+
     # collector.collect_all_resource_usage_of_deployment("deployment_a")
     # hpa_updater_thread.join()
 

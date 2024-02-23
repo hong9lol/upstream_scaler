@@ -1,7 +1,7 @@
 import os
 
 # 디렉토리 경로 설정
-directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/0222_2"
+directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/tt"
 
 # 해당 디렉토리 내의 모든 폴더를 찾습니다.
 folders = [
@@ -16,7 +16,7 @@ _type = ""
 sorted_folders = sorted(folders)
 result = dict()
 for folder in sorted_folders:
-    print(folder)
+    # print("folder name:", folder)
     if i % 2 == 1:
         _type = "default"
     else:
@@ -39,9 +39,9 @@ for folder in sorted_folders:
                     if k > 18:
                         break
 
-        print(
-            _type, total_sent, success_sent, round(success_sent / total_sent * 100, 2)
-        )
+        # print(
+        #     _type, total_sent, success_sent, round(success_sent / total_sent * 100, 2)
+        # )
         result[folder].append(
             [total_sent, success_sent, round(success_sent / total_sent * 100, 2)]
         )
@@ -53,7 +53,8 @@ for folder in sorted_folders:
             # read output.log and get total requests and success requests
             k = 0
             for line in file:
-                key = line.split(" ")[0]
+                key = line.split("	")[0]
+                # print(line, key)
                 if "redis" in key:
                     continue
                 if "mongo" in key:
@@ -68,22 +69,21 @@ for folder in sorted_folders:
                     continue
                 if key in d:
                     d[key][0] += 1
-                    d[key].append(line.split(" ")[2])
+                    d[key].append(line.split("	")[2])
                 else:
-                    print(line)
-                    d[key] = [1, line.split(" ")[2]]
+                    d[key] = [1, line.split("	")[2]]
         _l = []
         for key, item in d.items():
-            print(key, item)
+            # print(key, item)
             _l.append([key, item[0]])
         result[folder].append(_l)
 
-    print("=======================")
+    # print("=======================")
 
 import pandas as pd
 import os
 
-print(result)
+# print(result)
 writer = pd.ExcelWriter("data.xlsx")
 idx = 0
 for key, item in result.items():
