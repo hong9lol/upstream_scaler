@@ -7,24 +7,24 @@ sudo sysctl -w fs.inotify.max_user_watches=2099999999
 sudo sysctl -w fs.inotify.max_user_instances=2099999999
 sudo sysctl -w fs.inotify.max_queued_events=2099999999
 
-# echo 1. Delete Previous Environment and Create new Environment
-# kind delete cluster --name my-cluster
-# kind create cluster --name my-cluster --config ./yaml/kind/kind.yaml
+echo 1. Delete Previous Environment and Create new Environment
+kind delete cluster --name my-cluster
+kind create cluster --name my-cluster --config ./yaml/kind/kind.yaml
 
-# echo 2. Install application
-# echo 2-1. Install MetalLB
-# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
-# kubectl wait --namespace metallb-system \
-#                 --for=condition=ready pod \
-#                 --selector=app=metallb \
-#                 --timeout=90s
+echo 2. Install application
+echo 2-1. Install MetalLB
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+kubectl wait --namespace metallb-system \
+                --for=condition=ready pod \
+                --selector=app=metallb \
+                --timeout=90s
 
-# echo 2-2. IP address pool for service loadbalancing
-# baseIP=$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '/[[:space:]]/ {print $1}' | grep -oE '[0-9]+\.[0-9]+\.[0-9]')
-# export KIND_IP_RANGE="${baseIP}.200-${baseIP}.250"
-# echo $KIND_IP_RANGE
-# envsubst < yaml/metal-lb/metal-lb.yaml | kubectl apply -f-
-# sleep 10
+echo 2-2. IP address pool for service loadbalancing
+baseIP=$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '/[[:space:]]/ {print $1}' | grep -oE '[0-9]+\.[0-9]+\.[0-9]')
+export KIND_IP_RANGE="${baseIP}.200-${baseIP}.250"
+echo $KIND_IP_RANGE
+envsubst < yaml/metal-lb/metal-lb.yaml | kubectl apply -f-
+sleep 10
 
 echo 2-3. Install helm packages
 kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@
