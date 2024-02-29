@@ -17,7 +17,7 @@ spec:
             containers:
                 - image: hong9lol/simple_app:latest
                   imagePullPolicy: IfNotPresent
-                  name: simple-server-container1
+                  name: simple-server-container
                   ports:
                       - containerPort: 8080
                   readinessProbe:
@@ -29,19 +29,19 @@ spec:
                       periodSeconds: 5
                   resources:
                       limits:
-                          cpu: 200m
+                          cpu: 300m
                           memory: 128Mi
                       requests:
                           cpu: 200m
                           memory: 64Mi
-                - image: nginx:latest
-                  name: simple-server-container2
-                  resources:
-                      limits:
-                          cpu: 100m
-                          memory: 128Mi
-                      requests:
-                          cpu: 100m
-                          memory: 64Mi
+                # - image: nginx:latest
+                #   name: simple-server-container2
+                #   resources:
+                #       limits:
+                #           cpu: 100m
+                #           memory: 128Mi
+                #       requests:
+                #           cpu: 100m
+                #           memory: 64Mi
             imagePullSecrets:
                 - name: secret-jake
