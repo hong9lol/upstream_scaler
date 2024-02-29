@@ -182,23 +182,26 @@ func calUsage(last entity.Usage, prev entity.Usage) float64 {
 	return float64(usage) / float64(timpestamp)
 }
 
+// TODO: weight moving average
 func (s *StatCollector) calUsagePerSec(container entity.Container) float64 {
 	// TODO: need to consider the algorithm
 	// use 6 data to get avg usage
-	if len(container.Usages) < 6 {
-		// return when there is only one value in the list
+	const totalDataNum = 6
+	if len(container.Usages) < totalDataNum {
+		// return when there is less than totalDataNum value in the list
 		return 0
 	}
 	usagePerSec := 0.0
 	cnt := 5.0
+	wmaWeight := 1.0
 	for i := 0; i < 5; i++ {
-		if container.Usages[len(container.Usages)-(i+1)] == 0 || container.Usages[len(container.Usages)-(i+2)] == 0 {
+		if container.Usages[len(container.Usages)-(i+1)].Usage == int64(0) || container.Usages[len(container.Usages)-(i+2)].Usage == int64(0) {
 			cnt -= 1.0
 			continue
 		}
 		last := container.Usages[len(container.Usages)-(i+1)]
 		prev := container.Usages[len(container.Usages)-(i+2)]
-		usagePerSec += calUsage(last, prev)
+		usagePerSec += calUsage(last, prev) * wmaWeight
 	}
 	// fmt.Println(container.Name, (usage / timpestamp), "\n", container.Usages)
 	// usageRatePerSec := usagePerSec / container.CPURequest
@@ -335,7 +338,7 @@ func (s *StatCollector) Start(controllerServiceName string) {
 			podList = s.getAllPods()
 			statusInterval = 0
 		}
-
+		var notifyList []Notify
 		for _, hpa := range hpas {
 			// 매 초마다 stat 업데이트
 			stat := s.getStat(hpa.Target, podList)
@@ -349,7 +352,8 @@ func (s *StatCollector) Start(controllerServiceName string) {
 			}
 			if s.checkResourceUsage(updatedStat, hpa) {
 				notify := Notify{DeploymentName: hpa.Target, HPAName: hpa.Name}
-				pbytes, _ := json.Marshal(notify)
+				notifyList = append(notifyList, notify)
+				pbytes, _ := json.Marshal(notifyList)
 				buff := bytes.NewBuffer(pbytes)
 				_, err = http.Post("http://"+controllerServiceName+".upstream-system.svc.cluster.local:5001/api/v1/notify", "application/json", buff)
 				if err != nil {

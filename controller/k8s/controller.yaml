@@ -21,7 +21,8 @@ spec:
                 - name: controller
                   image: hong9lol/upstream-controller:0.1
                   #   image: 127.0.0.1:5000/upstream-controller:0.1
-                  imagePullPolicy: Always
+                  imagePullPolicy: IfNotPresent
+                  #   imagePullPolicy: Always
                   ports:
                       - name: http
                         containerPort: 5001

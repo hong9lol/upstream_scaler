@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from kube_client import client
 from manager import handler
 from db import hpa, agent
@@ -60,13 +60,17 @@ def added_agent():
 
 @app.route("/api/v1/notify", methods=["POST"])
 def notify():
-    job = json.loads(request.get_data())
-    logging.error(job)
-    try:
-        handler.job_enqueue(job)
-        return "Success", 200
-    except Exception:
-        return "Internal Server Error", 500
+    # job = json.loads(request.get_data())
+    data = request.json
+    if not isinstance(data, list):
+        logging.error("Expected a list in request body.")
+    for job in data:
+        # logging.error(job)
+        try:
+            handler.job_enqueue(job)
+        except Exception:
+            return "Internal Server Error", 500
+    return "Success", 200
 
 
 @app.route("/api/v1/health")

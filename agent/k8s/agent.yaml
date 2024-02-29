@@ -22,7 +22,8 @@ spec:
                 - name: agent
                   image: hong9lol/upstream-agent:0.1
                   #   image: localhost:5000/upstream-agent:0.1
-                  imagePullPolicy: Always
+                  imagePullPolicy: IfNotPresent
+                  #   imagePullPolicy: Always
                   ports:
                       - name: http
                         containerPort: 3001

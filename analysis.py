@@ -1,7 +1,7 @@
 import os
 
 # 디렉토리 경로 설정
-directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/tt"
+directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/data2"
 
 # 해당 디렉토리 내의 모든 폴더를 찾습니다.
 folders = [
@@ -10,38 +10,78 @@ folders = [
     if os.path.isdir(os.path.join(directory_path, d))
 ]
 
+
+import yaml
+import sys
+
+
+def get_limit_cpu():
+    # The path to your YAML file
+    yaml_file_path = "DeathStarBench/socialNetwork/helm-chart/socialnetwork/values.yaml"
+
+    key_to_change = "limitCpu"
+
+    ret = ""
+    with open(yaml_file_path, "r") as file:
+        yaml_content = yaml.safe_load(file)
+
+    ret = yaml_content["global"][key_to_change]
+    return ret.split("m")[0]
+
+
 # 각 폴더를 순회하며 'out.log' 파일을 찾아 해당 파일 내용을 읽습니다.
 i = 1
 _type = ""
 sorted_folders = sorted(folders)
 result = dict()
+test_cnt = 0
+init_limit_cpu = 20
 for folder in sorted_folders:
+    print("[Test #" + str(test_cnt) + "]")
+    test_cnt += 1
     # print("folder name:", folder)
     if i % 2 == 1:
         _type = "default"
     else:
         _type = "upstream"
-    result[folder] = [_type]
     i += 1
     total_sent = 0
     success_sent = 0
+    result[folder] = [test_cnt]
     file_path = os.path.join(directory_path, folder, "output.log")
     if os.path.exists(file_path):
+        # with open(file_path, "r") as file:
+        #     for line in file:
+        #         if " requests " in line:
+        #             if int(line.split(" requests ")[0]) < 800:
+        #                 total_sent = 1
+        #                 success_sent = 1
+
         with open(file_path, "r") as file:
+            result[folder].append(_type)
             # read output.log and get total requests and success requests
             k = 0
+            t_sent = 0
+            s_sent = 0
             for line in file:
                 if "Sent " in line:
                     total_sent += int(line.split(" ")[1])
+                    t_sent = int(line.split(" ")[1])
                 elif " requests " in line:
                     success_sent += int(line.split(" requests ")[0])
-                    k += 1
-                    if k > 18:
+                    s_sent = int(line.split(" requests ")[0])
+                    print(t_sent, s_sent)
+                    if int(line.split(" requests ")[0]) < 700:
+                        total_sent = 1
+                        success_sent = 1
                         break
-
-        # print(
-        #     _type, total_sent, success_sent, round(success_sent / total_sent * 100, 2)
-        # )
+                    k += 1
+                    # if k > 18:
+                    #     break
+        print(total_sent)
+        print(
+            _type, total_sent, success_sent, round(success_sent / total_sent * 100, 2)
+        )
         result[folder].append(
             [total_sent, success_sent, round(success_sent / total_sent * 100, 2)]
         )
@@ -85,17 +125,25 @@ import os
 
 # print(result)
 writer = pd.ExcelWriter("data.xlsx")
+i = 0
 idx = 0
 for key, item in result.items():
-    print("Type:", item[0])
-    print("request", item[1])
-    deployments = sorted(item[2])
+    print("Test Case #", item[0])
+    # print("Type:", item[1])
+    # print("request", item[2])
+
+    deployments = sorted(item[3])
+    deployments.insert(0, ["type", item[1]])
+    deployments.insert(0, ["total_request", item[2][0]])
+    deployments.insert(0, ["200_request", item[2][1]])
+    deployments.insert(0, ["limitCPU", init_limit_cpu + int((i) / 10) * 10])
+    i += 1
     for deployment in deployments:
         print(deployment[0], deployment[1])
 
     df1 = pd.DataFrame(deployments, columns=["deployment", "Pods"])
 
-    if item[0] == "default":
+    if item[1] == "default":
         df1.to_excel(
             writer,
             sheet_name="Data",

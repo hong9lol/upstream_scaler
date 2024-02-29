@@ -27,16 +27,27 @@ envsubst < yaml/metal-lb/metal-lb.yaml | kubectl apply -f-
 sleep 10
 
 echo 2-3. Install helm packages
-kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@
+kind load docker-image mongo:4.4.6 -n my-cluster # move local image to kind cluster nodes
+kind load docker-image redis:6.2.4 -n my-cluster
+kind load docker-image memcached:1.6.7 -n my-cluster
+kind load docker-image alpine/git:2.43.0 -n my-cluster
+kind load docker-image yg397/openresty-thrift:xenial -n my-cluster
+kind load docker-image yg397/media-frontend:xenial -n my-cluster
+kind load docker-image jaegertracing/all-in-one:1 -n my-cluster
+kind load docker-image deathstarbench/social-network-microservices:0.3.0 -n my-cluster
+
+kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@ 
 kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@ -n upstream-system
+
 kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
 helm uninstall social-network --wait
+sleep 30
 helm install social-network --wait ./DeathStarBench/socialNetwork/helm-chart/socialnetwork/
 
 echo 3. Start Metrics-server
 kubectl delete -n kube-system deployments.apps metrics-server
 kubectl apply -f yaml/metrics-server/metrics-server.yaml
-sleep 10
+sleep 60
 
 if [ "$1" = "default" ]; then
     echo Skip Step 4, 5 for upstream scaler
@@ -61,7 +72,7 @@ else
     kubectl apply -f yaml/kubelet_auth/service_account.yaml
     kubectl apply -f yaml/kubelet_auth/cluster_role_binding_auth.yaml
 fi
-sleep 60
+sleep 120
 
 echo 6. Run Log
 cd ./DeathStarBench/socialNetwork/benchmark_scripts
