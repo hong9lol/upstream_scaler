@@ -62,6 +62,8 @@ def get_cpu_usage_rate_per_sec(pods):
         for container in containers:
             container_cpu_usage_per_sec = 0.0
             _container = containers[container]
+            if len(_container["usages"]) < 2:
+                return 0.0
             logging.error(_container)
             logging.error(len(_container["usages"]))
             last = _container["usages"][len(_container["usages"]) - 1]

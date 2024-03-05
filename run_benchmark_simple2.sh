@@ -15,7 +15,7 @@ while true; do
   start=$(date +%s.%N)
   
   # Make 25 requests
-  for i in {1..60}; do
+  for i in {1..80}; do
     curl -s "$url" > /dev/null
   done
 

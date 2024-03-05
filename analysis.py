@@ -1,7 +1,7 @@
 import os
 
 # 디렉토리 경로 설정
-directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/data2"
+directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/new_data1"
 
 # 해당 디렉토리 내의 모든 폴더를 찾습니다.
 folders = [
@@ -35,13 +35,15 @@ _type = ""
 sorted_folders = sorted(folders)
 result = dict()
 test_cnt = 0
-init_limit_cpu = 20
+init_limit_cpu = 30
 for folder in sorted_folders:
     print("[Test #" + str(test_cnt) + "]")
     test_cnt += 1
     # print("folder name:", folder)
-    if i % 2 == 1:
+    if i % 3 == 1:
         _type = "default"
+    elif i % 3 == 2:
+        _type = "fast"
     else:
         _type = "upstream"
     i += 1
@@ -127,22 +129,24 @@ import os
 writer = pd.ExcelWriter("data.xlsx")
 i = 0
 idx = 0
+repeat = 6 * 3
+limit_add = 0
 for key, item in result.items():
     print("Test Case #", item[0])
     # print("Type:", item[1])
-    # print("request", item[2])
+    print("request", item[2])
 
     deployments = sorted(item[3])
     deployments.insert(0, ["type", item[1]])
     deployments.insert(0, ["total_request", item[2][0]])
     deployments.insert(0, ["200_request", item[2][1]])
-    deployments.insert(0, ["limitCPU", init_limit_cpu + int((i) / 10) * 10])
-    i += 1
+    deployments.insert(0, ["limitCPU", init_limit_cpu + limit_add])
+
     for deployment in deployments:
         print(deployment[0], deployment[1])
 
     df1 = pd.DataFrame(deployments, columns=["deployment", "Pods"])
-
+    i += 1
     if item[1] == "default":
         df1.to_excel(
             writer,
@@ -154,7 +158,7 @@ for key, item in result.items():
             startcol=0,
         )
 
-    else:
+    elif item[1] == "fast":
         df1.to_excel(
             writer,
             sheet_name="Data",
@@ -164,7 +168,20 @@ for key, item in result.items():
             startrow=idx,
             startcol=3,
         )
+
+    else:
+        df1.to_excel(
+            writer,
+            sheet_name="Data",
+            # index_label="index",
+            index=False,
+            header=None,
+            startrow=idx,
+            startcol=6,
+        )
         idx += len(deployments) + 1
+        if i % repeat == 0:
+            limit_add += 15
 
     print("=======================")
 writer.close()

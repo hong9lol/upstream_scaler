@@ -10,12 +10,19 @@ NAMESPACE="default"
 _start=$(date +%s%3N)
 echo $_start >> $_start.txt
 # Loop indefinitely
+
+# 0부터 30 사이의 랜덤 값을 생성
+RANDOM_NUMBER=$((RANDOM % 61))
+
+# 생성된 랜덤 값을 이용해 sleep 호출
+echo "Sleeping for $RANDOM_NUMBER seconds..."
+sleep $RANDOM_NUMBER   
 while true; do
   # Start time measurement
   start=$(date +%s.%N)
   
   # Make 25 requests
-  for i in {1..25}; do
+  for i in {1..30}; do
     curl -s "$url" > /dev/null
   done
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo ====== Start ======
 
@@ -27,10 +27,8 @@ sleep 10
 
 echo 3. Start Metrics-server
 kubectl delete -n kube-system deployments.apps metrics-server
-
-
 # 0부터 30 사이의 랜덤 값을 생성
-RANDOM_NUMBER=$((RANDOM % 61))
+RANDOM_NUMBER=$((RANDOM % 10))
 
 # 생성된 랜덤 값을 이용해 sleep 호출
 echo "Sleeping for $RANDOM_NUMBER seconds..."
@@ -42,13 +40,21 @@ echo 4. Start Simple Servers
 kubectl apply -f yaml/simple_server/simple_server.yaml
 kubectl expose deployment simple-server --type=LoadBalancer --port=8080 & 
 # 0부터 30 사이의 랜덤 값을 생성
-RANDOM_NUMBER=$((RANDOM % 16))
+RANDOM_NUMBER=$((RANDOM % 60))
+
+# 생성된 랜덤 값을 이용해 sleep 호출
+echo "Sleeping for $RANDOM_NUMBER seconds..."
+sleep $RANDOM_NUMBER 
+sleep 60
+
+kubectl apply -f yaml/metrics-server/metrics-server.yaml
+kubectl apply -f yaml/simple_server/simple_server_hpa.yaml
+# 0부터 30 사이의 랜덤 값을 생성
+RANDOM_NUMBER=$((RANDOM % 15))
 
 # 생성된 랜덤 값을 이용해 sleep 호출
 echo "Sleeping for $RANDOM_NUMBER seconds..."
 sleep $RANDOM_NUMBER   
-kubectl apply -f yaml/simple_server/simple_server_hpa.yaml
-sleep 10
 
 if [ "$1" = "default" ]; then
     echo Skip Step 4, 5 for upstream scaler
@@ -73,14 +79,14 @@ else
     kubectl apply -f yaml/kubelet_auth/service_account.yaml
     kubectl apply -f yaml/kubelet_auth/cluster_role_binding_auth.yaml
 fi
-sleep 60
+sleep 90
 
 # set target IP
 kubectl get svc | grep simple-server |  awk '/[[:space:]]/ {print $4}' > target_url.txt
 
 ./run_benchmark_simple1.sh
-sleep 15
+# sleep 15
 # set target IP
-./run_benchmark_simple2.sh
+# ./run_benchmark_simple2.sh
 
 echo ====== Done ======
