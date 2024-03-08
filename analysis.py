@@ -1,7 +1,7 @@
 import os
 
 # 디렉토리 경로 설정
-directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/new_data1"
+directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/new_data2"
 
 # 해당 디렉토리 내의 모든 폴더를 찾습니다.
 folders = [
@@ -15,18 +15,18 @@ import yaml
 import sys
 
 
-def get_limit_cpu():
-    # The path to your YAML file
-    yaml_file_path = "DeathStarBench/socialNetwork/helm-chart/socialnetwork/values.yaml"
+# def get_limit_cpu():
+#     # The path to your YAML file
+#     yaml_file_path = "DeathStarBench/socialNetwork/helm-chart/socialnetwork/values.yaml"
 
-    key_to_change = "limitCpu"
+#     key_to_change = "limitCpu"
 
-    ret = ""
-    with open(yaml_file_path, "r") as file:
-        yaml_content = yaml.safe_load(file)
+#     ret = ""
+#     with open(yaml_file_path, "r") as file:
+#         yaml_content = yaml.safe_load(file)
 
-    ret = yaml_content["global"][key_to_change]
-    return ret.split("m")[0]
+#     ret = yaml_content["global"][key_to_change]
+#     return ret.split("m")[0]
 
 
 # 각 폴더를 순회하며 'out.log' 파일을 찾아 해당 파일 내용을 읽습니다.
@@ -73,10 +73,10 @@ for folder in sorted_folders:
                     success_sent += int(line.split(" requests ")[0])
                     s_sent = int(line.split(" requests ")[0])
                     print(t_sent, s_sent)
-                    if int(line.split(" requests ")[0]) < 700:
-                        total_sent = 1
-                        success_sent = 1
-                        break
+                    # if int(line.split(" requests ")[0]) < 700:
+                    #     total_sent = 1
+                    #     success_sent = 1
+                    #     break
                     k += 1
                     # if k > 18:
                     #     break

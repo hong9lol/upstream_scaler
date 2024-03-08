@@ -8,7 +8,11 @@ sudo sysctl -w fs.inotify.max_queued_events=2099999999
 
 echo 1. Delete Previous Environment and Create new Environment
 kind delete cluster --name my-cluster
-kind create cluster --name my-cluster --config ./yaml/kind/kind.yaml
+if [ "$1" = "fast" ]; then
+    kind create cluster --name my-cluster --config ./yaml/kind/kind_1s.yaml
+else
+    kind create cluster --name my-cluster --config ./yaml/kind/kind.yaml
+fi
 
 echo 2. Install application
 echo 2-1. Install MetalLB
@@ -47,7 +51,12 @@ echo "Sleeping for $RANDOM_NUMBER seconds..."
 sleep $RANDOM_NUMBER 
 sleep 60
 
-kubectl apply -f yaml/metrics-server/metrics-server.yaml
+if [ "$1" = "fast" ]; then
+    kubectl apply -f yaml/metrics-server/metrics-server_15s.yaml
+else
+    kubectl apply -f yaml/metrics-server/metrics-server_60s.yaml
+fi
+sleep 90
 kubectl apply -f yaml/simple_server/simple_server_hpa.yaml
 # 0부터 30 사이의 랜덤 값을 생성
 RANDOM_NUMBER=$((RANDOM % 15))
@@ -56,7 +65,10 @@ RANDOM_NUMBER=$((RANDOM % 15))
 echo "Sleeping for $RANDOM_NUMBER seconds..."
 sleep $RANDOM_NUMBER   
 
+
 if [ "$1" = "default" ]; then
+    echo Skip Step 4, 5 for upstream scaler
+elif [ "$1" = "fast" ]; then
     echo Skip Step 4, 5 for upstream scaler
 else
     echo 4. Upstream controller and agents

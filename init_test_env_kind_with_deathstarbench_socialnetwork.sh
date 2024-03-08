@@ -53,7 +53,7 @@ echo 3. Start Metrics-server
 kubectl delete -n kube-system deployments.apps metrics-server
 sleep 10
 if [ "$1" = "fast" ]; then
-    kubectl apply -f yaml/metrics-server/metrics-server_12s.yaml
+    kubectl apply -f yaml/metrics-server/metrics-server_15s.yaml
 else
     kubectl apply -f yaml/metrics-server/metrics-server_60s.yaml
 fi

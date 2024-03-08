@@ -7,16 +7,18 @@ url="http://$targetIP:8080/api/v1/mid"
 DEPLOYMENT_NAME="simple-server"
 NAMESPACE="default"
 
-_start=$(date +%s%3N)
-echo $_start >> $_start.txt
-# Loop indefinitely
 
 # 0부터 30 사이의 랜덤 값을 생성
-RANDOM_NUMBER=$((RANDOM % 61))
+RANDOM_NUMBER=$((RANDOM % 171))
 
 # 생성된 랜덤 값을 이용해 sleep 호출
 echo "Sleeping for $RANDOM_NUMBER seconds..."
 sleep $RANDOM_NUMBER   
+
+_start=$(date +%s%3N)
+echo $_start >> $_start.txt
+# Loop indefinitely
+
 while true; do
   # Start time measurement
   start=$(date +%s.%N)
