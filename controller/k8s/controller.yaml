@@ -27,8 +27,18 @@ spec:
                       - name: http
                         containerPort: 5001
                         protocol: TCP
+                  volumeMounts:
+                      - name: timelog
+                        mountPath: /host/log
+                  securityContext:
+                      privileged: true
             imagePullSecrets:
                 - name: secret-jake
+            volumes:
+                - name: timelog
+                  hostPath:
+                      path: /home/leejaehong/log
+                      type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service

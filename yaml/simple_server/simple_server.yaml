@@ -16,7 +16,8 @@ spec:
         spec:
             containers:
                 - image: hong9lol/simple_app:latest
-                  imagePullPolicy: IfNotPresent
+                    imagePullPolicy: IfNotPresent
+                #   imagePullPolicy: Always
                   name: simple-server-container
                   ports:
                       - containerPort: 8080
@@ -29,10 +30,10 @@ spec:
                       periodSeconds: 5
                   resources:
                       limits:
-                          cpu: 300m
+                          cpu: 20m
                           memory: 128Mi
                       requests:
-                          cpu: 200m
+                          cpu: 20m
                           memory: 64Mi
                 # - image: nginx:latest
                 #   name: simple-server-container2

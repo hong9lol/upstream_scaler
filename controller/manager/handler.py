@@ -39,14 +39,21 @@ def remove_from_wait_list(deployment_name, waiting_time):
     wait_list.remove(deployment_name)
 
 
+import time
+
+
 def do_scale(deployment_name, current_cpu_usage_rate, target_cpu_utilization, hpa_name):
     # TODO: get the deployment everytime, make it more efficient (let's use deployment db)
     deployment = client.get_deployment(deployment_name)
     replica_count = math.ceil(
         deployment["replicas"] * (current_cpu_usage_rate / target_cpu_utilization)
     )
+    current_time = time.time()
     client.set_replica(deployment_name, replica_count, hpa_name)
     wait_list.append(deployment_name)
+    with open("/host/log/log.txt", "a") as file:
+        file.write(str(current_time) + " decision2 and update\n")
+        file.write(" Done\n")
     # pod 생성 시간을 고려하여 약 15초간 해당 deployment는 slcaling 동작하지 않음
     threading.Thread(target=remove_from_wait_list, args=(deployment_name, 15)).start()
     logging.info("Scale out " + deployment_name + ", replicas:" + str(replica_count))

@@ -74,6 +74,8 @@ spec:
                         mountPath: /host/sys/fs/cgroup
                       - name: kubelet
                         mountPath: /var/lib/kubelet
+                      - name: timelog
+                        mountPath: /host/log
 
             # volumeMounts:
             #     - name: docker
@@ -86,6 +88,10 @@ spec:
                 - name: kubelet
                   hostPath:
                       path: /var/lib/kubelet
+                - name: timelog
+                  hostPath:
+                      path: /home/leejaehong/log
+                      type: DirectoryOrCreate
             # - name: rootfs
             #   hostPath:
             #       path: /

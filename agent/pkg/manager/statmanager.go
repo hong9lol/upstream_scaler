@@ -356,9 +356,24 @@ func (s *StatCollector) Start(controllerServiceName string) {
 				pbytes, _ := json.Marshal(notifyList)
 				buff := bytes.NewBuffer(pbytes)
 				_, err = http.Post("http://"+controllerServiceName+".upstream-system.svc.cluster.local:5001/api/v1/notify", "application/json", buff)
+
 				if err != nil {
 					panic(err)
 				}
+
+				currentTime := time.Now().UnixMilli()
+				_currentTime := strconv.FormatInt(currentTime, 10)
+				f, err := os.OpenFile("/host/log/log.txt",
+					os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					log.Println(err)
+				}
+
+				content := _currentTime + " decision1 and notify\n"
+				if _, err := f.WriteString(content); err != nil {
+					log.Println(err)
+				}
+				f.Close()
 			}
 		}
 		statusInterval++
