@@ -46,7 +46,9 @@ kubectl create secret docker-registry secret-jake --docker-username=hong9lol --d
 
 kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
 helm uninstall social-network --wait
+echo date +"%T"
 sleep 330
+echo install application
 helm install social-network --wait ./DeathStarBench/socialNetwork/helm-chart/socialnetwork/
 
 echo 3. Start Metrics-server
