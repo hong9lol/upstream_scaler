@@ -24,6 +24,7 @@ echo 2. Install application
 #                --timeout=90s
 
 echo 2-2. IP address pool for service loadbalancing
+kubectl apply -f yaml/metal-lb/routing.yaml 
 #baseIP=$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '/[[:space:]]/ {print $1}' | grep -oE '[0-9]+\.[0-9]+\.[0-9]')
 #export KIND_IP_RANGE="${baseIP}.200-${baseIP}.250"
 #echo $KIND_IP_RANGE
