@@ -8,11 +8,22 @@ sudo sysctl -w fs.inotify.max_user_instances=2099999999
 sudo sysctl -w fs.inotify.max_queued_events=2099999999
 
 echo 1. Delete Previous Environment and Create new Environment
-#if [ "$1" = "fast" ]; then
-#    kind create cluster --name my-cluster --config ./yaml/kind/kind_1s.yaml
-#else
-#    kind create cluster --name my-cluster --config ./yaml/kind/kind.yaml
-#fi
+if [ "$1" = "fast" ]; then
+    echo Optomal HPA
+    sed -i 's/--horizontal-pod-autoscaler-sync-period=15s/--horizontal-pod-autoscaler-sync-period=1s/g' /etc/kubernetes/manifests/kube-controller-manager.yaml
+elif [ "$1" = "default" ]; then
+    echo Default HPA
+    sed -i 's/--horizontal-pod-autoscaler-sync-period=1s/--horizontal-pod-autoscaler-sync-period=15s/g' /etc/kubernetes/manifests/kube-controller-manager.yaml
+else
+    echo UHPA
+    sed -i 's/--horizontal-pod-autoscaler-sync-period=15s/--horizontal-pod-autoscaler-sync-period=1s/g' /etc/kubernetes/manifests/kube-controller-manager.yaml
+fi
+name=$(kubectl get pods -n kube-system -l component=kube-controller-manager -o jsonpath="{.items[*].metadata.name}")
+echo $name
+kubectl delete pod -n kube-system $name
+sleep 10
+name=$(kubectl get pods -n kube-system -l component=kube-controller-manager -o jsonpath="{.items[*].metadata.name}")
+kubectl describe pod $name  -n kube-system | grep horizontal 
 
 
 echo 2. Install application
