@@ -61,6 +61,9 @@ else
 fi
 sleep 90
 
+kubectl delete deployments.apps -n upstream-system upstream-controller
+kubectl delete daemonsets.apps -n upstream-system upstream-agent
+
 if [ "$1" = "default" ]; then
     echo Skip Step 4, 5 for upstream scaler
 elif [ "$1" = "fast" ]; then
