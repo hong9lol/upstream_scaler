@@ -11,8 +11,8 @@ for limit in ${limits[@]}
         for i in $SET
             do  
                 echo $limit $i
-                #./init_test_env_gcp_with_deathstarbench_socialnetwork.sh default
-                #./init_test_env_gcp_with_deathstarbench_socialnetwork.sh fast
+                ./init_test_env_gcp_with_deathstarbench_socialnetwork.sh default
+                ./init_test_env_gcp_with_deathstarbench_socialnetwork.sh fast
                 ./init_test_env_gcp_with_deathstarbench_socialnetwork.sh
             done
     done
