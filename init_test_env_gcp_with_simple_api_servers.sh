@@ -81,6 +81,8 @@ sleep $RANDOM_NUMBER
 sleep 60
 
 echo 4. Start Simple Servers
+kubectl delete -f yaml/simple_server/simple_server.yaml
+sleep 10
 kubectl apply -f yaml/simple_server/simple_server.yaml
 kubectl expose deployment simple-server --type=LoadBalancer --port=8080 & 
 # 0부터 30 사이의 랜덤 값을 생성
