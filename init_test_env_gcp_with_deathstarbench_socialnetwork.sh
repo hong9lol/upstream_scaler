@@ -7,6 +7,15 @@ sudo sysctl -w fs.inotify.max_user_watches=2099999999
 sudo sysctl -w fs.inotify.max_user_instances=2099999999
 sudo sysctl -w fs.inotify.max_queued_events=2099999999
 
+echo reset etcd
+kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
+helm uninstall social-network --wait
+sleep 30
+
+sudo systemctl stop etcd
+sudo rm -rf /var/lib/etcd
+sudo systemctl start etcd
+
 echo 1. Delete Previous Environment and Create new Environment
 if [ "$1" = "fast" ]; then
     echo Optomal HPA
@@ -55,10 +64,10 @@ echo 2-3. Install helm packages
 kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@ 
 kubectl create secret docker-registry secret-jake --docker-username=hong9lol --docker-password=dlwoghd12@ -n upstream-system
 
-kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
-helm uninstall social-network --wait
+#kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
+#helm uninstall social-network --wait
 date +"%T"
-sleep 330
+#sleep 330
 echo install application
 helm install social-network --wait ./DeathStarBench/socialNetwork/helm-chart/socialnetwork/
 
@@ -100,7 +109,7 @@ else
     kubectl apply -f yaml/kubelet_auth/service_account.yaml
     kubectl apply -f yaml/kubelet_auth/cluster_role_binding_auth.yaml
 fi
-sleep 120
+sleep 80
 
 echo 6. Run Log
 cd ./DeathStarBench/socialNetwork/benchmark_scripts
