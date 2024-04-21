@@ -7,14 +7,10 @@ sudo sysctl -w fs.inotify.max_user_watches=2099999999
 sudo sysctl -w fs.inotify.max_user_instances=2099999999
 sudo sysctl -w fs.inotify.max_queued_events=2099999999
 
-echo reset etcd
+echo delete previsoue application
 kubectl delete horizontalpodautoscalers.autoscaling --all=true --now=true --wait=true
 helm uninstall social-network --wait
 sleep 30
-
-sudo systemctl stop etcd
-sudo rm -rf /var/lib/etcd
-sudo systemctl start etcd
 
 echo 1. Delete Previous Environment and Create new Environment
 if [ "$1" = "fast" ]; then
