@@ -41,6 +41,7 @@ echo 2. Install application
 
 echo 2-2. IP address pool for service loadbalancing
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 kubectl apply -f yaml/metal-lb/routing.yaml 
 #baseIP=$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '/[[:space:]]/ {print $1}' | grep -oE '[0-9]+\.[0-9]+\.[0-9]')
 #export KIND_IP_RANGE="${baseIP}.200-${baseIP}.250"
