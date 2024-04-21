@@ -68,7 +68,7 @@ kubectl create secret docker-registry secret-jake --docker-username=hong9lol --d
 date +"%T"
 #sleep 330
 echo install application
-helm install social-network --wait ./DeathStarBench/socialNetwork/helm-chart/socialnetwork/
+#helm install social-network --wait ./DeathStarBench/socialNetwork/helm-chart/socialnetwork/
 
 echo 3. Start Metrics-server
 kubectl delete -n kube-system deployments.apps metrics-server
