@@ -3,8 +3,8 @@
 echo ====== TEST Start ======
 
 # limits=( 20 30 40 50 60 )
-#limits=( 30 45 60 75 )
-limits=( 100 125 150 200 )
+limits=( 30 45 60 75 )
+#limits=( 100 125 150 200 )
 for limit in ${limits[@]}
     do    
         python3 limits.py $limit

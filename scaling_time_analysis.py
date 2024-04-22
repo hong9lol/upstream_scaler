@@ -18,7 +18,7 @@ for f in sorted_files:
     idx += 1
     # 파일을 열고 3번째 줄을 읽어 출력합니다.
     # print(idx)
-    if idx % 3 == 2:
+    if idx % 3 == 0:
         # continue
         with open(file_name, "r") as file:
             # 각 줄을 순회하면서 3번째 줄을 찾습니다.

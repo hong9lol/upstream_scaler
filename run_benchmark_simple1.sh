@@ -21,12 +21,14 @@ echo $_start >> $_start.txt
 
 while true; do
   # Start time measurement
-  start=$(date +%s.%N)
+  #start=$(date +%s.%N)
   
   # Make 25 requests
-  for i in {1..45}; do
-    curl -s "$url" > /dev/null
-  done
+  #for i in {1..10}; do
+  #  curl -s "$url" > /dev/null
+  #done
+	
+	curl -o /dev/null -s -w %{time_total}\\n  "$url"
 
   # Wait for the next second to start a new batch of 20 requests
   # end=$(date +%s.%N)
