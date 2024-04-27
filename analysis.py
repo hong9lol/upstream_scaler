@@ -129,7 +129,7 @@ import os
 writer = pd.ExcelWriter("data.xlsx")
 i = 0
 idx = 0
-repeat = 1 * 3
+repeat = 6 * 3
 limit_add = 0
 for key, item in result.items():
     print("Test Case #", item[0])
