@@ -15,7 +15,7 @@ RANDOM_NUMBER=$((RANDOM % 171))
 echo "Sleeping for $RANDOM_NUMBER seconds..."
 sleep $RANDOM_NUMBER   
 
-_start=$(date +%s%3N)
+_start=$(date +%s%3)
 echo $_start >> $_start.txt
 # Loop indefinitely
 

@@ -1,38 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    labels:
-        app: simple-server2
-    name: simple-server2
+  labels:
+    app: simple-server2
+  name: simple-server2
 spec:
-    replicas: 5
-    selector:
-        matchLabels:
-            app: simple-server2
-    template:
-        metadata:
-            labels:
-                app: simple-server2
-        spec:
-            containers:
-                - image: hong9lol/simple_app:latest
-                  imagePullPolicy: IfNotPresent
-                  name: simple-server2-container1
-                  ports:
-                      - containerPort: 8081
-                  readinessProbe:
-                      failureThreshold: 10
-                      httpGet:
-                          path: /healthz
-                          port: 8080
-                      initialDelaySeconds: 1
-                      periodSeconds: 5
-                  resources:
-                      limits:
-                          cpu: 400m
-                          memory: 128Mi
-                      requests:
-                          cpu: 200m
-                          memory: 64Mi
-            imagePullSecrets:
-                - name: secret-jake
+  replicas: 50
+  selector:
+    matchLabels:
+      app: simple-server2
+  template:
+    metadata:
+      labels:
+        app: simple-server2
+    spec:
+      containers:
+        - image: hong9lol/simple_app:latest
+          imagePullPolicy: IfNotPresent
+          name: simple-server2-container1
+          ports:
+            - containerPort: 8081
+          readinessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 400m
+              memory: 128Mi
+            requests:
+              cpu: 200m
+              memory: 64Mi
+        - image: nginx:latest
+          name: simple-server-container2
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+      imagePullSecrets:
+        - name: secret-jake
