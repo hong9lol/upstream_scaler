@@ -1,7 +1,7 @@
 import os
 
 # 디렉토리 경로 설정
-directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/new_data2"
+directory_path = "./DeathStarBench/socialNetwork/benchmark_scripts/log/temp14"
 
 # 해당 디렉토리 내의 모든 폴더를 찾습니다.
 folders = [
@@ -129,7 +129,7 @@ import os
 writer = pd.ExcelWriter("data.xlsx")
 i = 0
 idx = 0
-repeat = 6 * 3
+repeat = 5 * 3
 limit_add = 0
 for key, item in result.items():
     print("Test Case #", item[0])

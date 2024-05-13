@@ -20,21 +20,20 @@ spec:
           name: simple-server-container
           ports:
             - containerPort: 8080
-          #   readinessProbe:
-          #     failureThreshold: 10
-          #     httpGet:
-          #       path: /healthz
-          #       port: 8080
-          #     initialDelaySeconds: 1
-          #     periodSeconds: 5
-
+          readinessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 5
           resources:
             limits:
-              cpu: 20m
-              memory: 32Mi
+              cpu: 300m
+              memory: 128Mi
             requests:
-              cpu: 20m
-              memory: 32Mi
+              cpu: 50m
+              memory: 64Mi
         # - image: nginx:latest
         #   name: simple-server-container2
         #   resources:
