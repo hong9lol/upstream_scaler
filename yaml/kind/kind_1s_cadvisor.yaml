@@ -6,6 +6,7 @@ kubeadmConfigPatches:
     controllerManager:
       extraArgs:
         horizontal-pod-autoscaler-sync-period: "1s"
+        v: "4"
 nodes:
   - role: control-plane
     extraPortMappings:
@@ -22,24 +23,6 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "ingress-ready=true"
-            anonymous-auth: "true"
-            authorization-mode: "AlwaysAllow"
-  - role: worker
-    image: kindest/node:latest
-    kubeadmConfigPatches:
-      - |
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            anonymous-auth: "true"
-            authorization-mode: "AlwaysAllow"
-  - role: worker
-    image: kindest/node:latest
-    kubeadmConfigPatches:
-      - |
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
             anonymous-auth: "true"
             authorization-mode: "AlwaysAllow"
   - role: worker
